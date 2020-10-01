@@ -4,7 +4,7 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.example;
+package sh.pancake.main;
 
 import sh.pancake.launcher.PancakeLauncher;
 

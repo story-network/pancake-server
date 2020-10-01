@@ -1,7 +1,0 @@
-{
-  "mappings": {
-    "sh/pancake/mixin/MinecraftServerMixin": {
-      "prepareLevels": "Lnet/minecraft/server/MinecraftServer;prepareLevels(Lnet/minecraft/server/level/progress/ChunkProgressListener;)V"
-    }
-  }
-}

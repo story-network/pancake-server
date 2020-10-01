@@ -8,14 +8,12 @@ package sh.pancake.server;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.spongepowered.asm.mixin.MixinEnvironment;
-import org.spongepowered.asm.mixin.Mixins;
 
 import sh.pancake.classloader.ModdedClassLoader;
 
-public class ExampleServer implements IPancakeServer {
+public class PancakeServer implements IPancakeServer {
 
-    private static final Logger LOGGER = LogManager.getLogger("ExampleServer");
+    private static final Logger LOGGER = LogManager.getLogger("PancakeServer");
 
     public String getVersion() {
         return "1.16.3";
@@ -27,6 +25,9 @@ public class ExampleServer implements IPancakeServer {
 
         LOGGER.info("Server version: " + getVersion());
         LOGGER.info("Applying server arguments [ " + String.join(", ", args) + " ]");
+
+        // Force to use our configuration
+        loader.addIgnoreRes("log4j2.xml");
 
         try {
             Class<?> serverClass = loader.loadClass("net.minecraft.server.Main");

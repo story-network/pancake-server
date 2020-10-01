@@ -6,7 +6,6 @@
 
 package sh.pancake.mod;
 
-import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.transformer.PancakeMixinTransformer;
 
 public class MixinClassModder implements IClassModder {

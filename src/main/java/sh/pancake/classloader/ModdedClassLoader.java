@@ -15,6 +15,8 @@ import java.net.URLConnection;
 import java.security.CodeSource;
 import java.security.SecureClassLoader;
 import java.security.cert.Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,6 +85,9 @@ public class ModdedClassLoader extends SecureClassLoader implements IURLExtendab
 	
 	private Map<String, Metadata> metadataCache;
 
+	// Will ignore resources start with name in extendedLoader
+	private Collection<String> ignoreResCollection;
+
     public ModdedClassLoader(ClassLoader classLoader) {
         this(classLoader, null);
     }
@@ -96,6 +101,7 @@ public class ModdedClassLoader extends SecureClassLoader implements IURLExtendab
 		this.modder = modder;
 		
 		this.metadataCache = new HashMap<>();
+		this.ignoreResCollection = new ArrayList<>();
     }
 
     public IClassModder getModder() {
@@ -104,7 +110,11 @@ public class ModdedClassLoader extends SecureClassLoader implements IURLExtendab
 
     public void setModder(IClassModder modder) {
         this.modder = modder;
-    }
+	}
+	
+	public void addIgnoreRes(String res) {
+		this.ignoreResCollection.add(res);
+	}
 
     @Override
     public void addURL(URL url) {
@@ -169,11 +179,23 @@ public class ModdedClassLoader extends SecureClassLoader implements IURLExtendab
 	
 			return c;
 		}
-    }
+	}
+	
+	public boolean shouldIgnoreRes(String name) {
+		if (name == null) return false;
+
+		for (String keyword : ignoreResCollection) {
+			if (name.startsWith(keyword)) return true;
+		}
+
+		return false;
+	}
 
     @Override
 	public URL getResource(String name) {
-		URL url = extendedLoader.getResource(name);
+		URL url = null;
+
+		if (!shouldIgnoreRes(name)) url = extendedLoader.getResource(name);
 
 		if (url == null) {
 			url = classLoader.getResource(name);
@@ -184,6 +206,8 @@ public class ModdedClassLoader extends SecureClassLoader implements IURLExtendab
 
 	@Override
 	public Enumeration<URL> getResources(String name) throws IOException {
+		if (shouldIgnoreRes(name)) return classLoader.getResources(name);
+
 		Enumeration<URL> first = extendedLoader.getResources(name);
 		Enumeration<URL> second = classLoader.getResources(name);
 		return new Enumeration<URL>() {
@@ -208,7 +232,8 @@ public class ModdedClassLoader extends SecureClassLoader implements IURLExtendab
     }
 
 	public InputStream getResourceAsStream(String name, boolean skipOriginalLoader) {
-		InputStream inputStream = extendedLoader.getResourceAsStream(name);
+		InputStream inputStream = null;
+		if (!shouldIgnoreRes(name)) inputStream = extendedLoader.getResourceAsStream(name);
 
 		if (inputStream == null && !skipOriginalLoader) {
 			inputStream = classLoader.getResourceAsStream(name);

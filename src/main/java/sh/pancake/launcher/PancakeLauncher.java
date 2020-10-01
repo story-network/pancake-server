@@ -19,8 +19,6 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.Mixins;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-import org.spongepowered.asm.mixin.transformer.Config;
 
 import io.heartpattern.mcremapper.MCRemapper;
 import io.heartpattern.mcremapper.model.LocalVariableFixType;
