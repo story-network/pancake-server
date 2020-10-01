@@ -87,6 +87,9 @@ public class PluginManager {
         PluginData data = new PluginData(server, plugin, info, new PluginDataStorage(new File(pluginStorage.getDirectory(), info.getId())), loader);
 
         pluginMap.put(info.getId(), data);
+        plugin.init(data);
+        LOGGER.info(info.getName() + " has been initialized");
+
         plugin.onLoad();
 
         LOGGER.info(info.getName() + " has been loaded");
