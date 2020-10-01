@@ -8,9 +8,9 @@ package sh.pancake.server.mod;
 
 import java.io.File;
 
-import sh.pancake.common.storage.ObjectStorage;
+import sh.pancake.common.storage.DiskIOStorage;
 
-public class ModDataStorage extends ObjectStorage {
+public class ModDataStorage extends DiskIOStorage {
 
     public ModDataStorage(File dir) {
         super(dir);

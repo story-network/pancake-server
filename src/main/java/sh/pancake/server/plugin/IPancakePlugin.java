@@ -4,10 +4,11 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.server.mod;
+package sh.pancake.server.plugin;
 
-public class ModInfo {
+public interface IPancakePlugin {
     
-    
+    void onLoad();
+    void onUnload();
 
 }

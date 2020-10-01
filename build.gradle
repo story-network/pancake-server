@@ -71,10 +71,10 @@ dependencies {
 
     embed project(':story-network-common')
 
-    // runtime mc deobfuscator
+    // Runtime mc deobfuscator
     embed 'io.heartpattern:mcremapper:2.0.2-SNAPSHOT'
 
-    // mixin modding
+    // Mixin modding
     embed('org.spongepowered:mixin:0.8') {
         exclude module: 'launchwrapper'
         exclude module: 'modlauncher'

@@ -6,8 +6,6 @@
 
 package sh.pancake.server.mod;
 
-public class ModInfo {
+public interface IPancakeMod {
     
-    
-
 }

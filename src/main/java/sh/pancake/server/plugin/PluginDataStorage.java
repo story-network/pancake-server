@@ -8,9 +8,9 @@ package sh.pancake.server.plugin;
 
 import java.io.File;
 
-import sh.pancake.common.storage.ObjectStorage;
+import sh.pancake.common.storage.DiskIOStorage;
 
-public class PluginDataStorage extends ObjectStorage {
+public class PluginDataStorage extends DiskIOStorage {
 
     public PluginDataStorage(File dir) {
         super(dir);
