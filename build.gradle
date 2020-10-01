@@ -85,6 +85,10 @@ dependencies {
 
     embed 'com.google.code.gson:gson:2.8.6'
 
+    // Kotlin support
+    embed 'org.jetbrains.kotlin:kotlin-stdlib:1.4.10'
+    embed 'org.jetbrains.kotlin:kotlin-reflect:1.4.10'
+
     // log4j for logging
     embed 'org.apache.logging.log4j:log4j-core:2.8.1'
     embed 'org.apache.logging.log4j:log4j-api:2.8.1'
