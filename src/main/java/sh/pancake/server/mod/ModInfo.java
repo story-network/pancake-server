@@ -6,8 +6,45 @@
 
 package sh.pancake.server.mod;
 
+import java.util.List;
+
+import com.google.gson.annotations.SerializedName;
+
 public class ModInfo {
     
-    
+    @SerializedName("id")
+    private String id;
+
+    @SerializedName("name")
+    private String name;
+
+    @SerializedName("authors")
+    private List<String> authors;
+
+    @SerializedName("entrypoint")
+    private String modClassName;
+
+    @SerializedName("mixin")
+    private String mixinConfigName;
+
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<String> getAuthors() {
+        return authors;
+    }
+
+    public String getModClassName() {
+        return modClassName;
+    }
+
+    public String getMixinConfigName() {
+        return mixinConfigName;
+    }
 
 }

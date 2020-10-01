@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import sh.pancake.classloader.ClassLoaderProvider;
 import sh.pancake.common.storage.DiskIOStorage;
 import sh.pancake.server.Constants;
+import sh.pancake.server.PancakeServer;
 import sh.pancake.server.plugin.loader.PluginClassLoader;
 
 /*
@@ -32,6 +33,8 @@ public class PluginManager {
 
     private static final Logger LOGGER = LogManager.getLogger("PluginManager");
 
+    private PancakeServer server;
+
     private DiskIOStorage pluginStorage;
 
     private ClassLoader serverClassLoader;
@@ -39,13 +42,18 @@ public class PluginManager {
 
     private Map<String, PluginData> pluginMap;
 
-    public PluginManager(String pluginFolderName, ClassLoader serverClassLoader) {
+    public PluginManager(PancakeServer server, String pluginFolderName, ClassLoader serverClassLoader) {
+        this.server = server;
         this.pluginStorage = new DiskIOStorage(pluginFolderName);
         
         this.serverClassLoader = serverClassLoader;
         this.pluginClassLoaderProvider = new ClassLoaderProvider();
 
         this.pluginMap = new ConcurrentHashMap<>();
+    }
+
+    public PancakeServer getServer() {
+        return server;
     }
 
     public DiskIOStorage getPluginStorage() {
@@ -76,7 +84,7 @@ public class PluginManager {
         IPancakePlugin plugin = (IPancakePlugin) loader.loadClass(info.getPluginClassName()).getConstructor()
                 .newInstance();
 
-        PluginData data = new PluginData(plugin, info, loader);
+        PluginData data = new PluginData(server, plugin, info, new PluginDataStorage(new File(pluginStorage.getDirectory(), info.getId())), loader);
 
         pluginMap.put(info.getId(), data);
         plugin.onLoad();

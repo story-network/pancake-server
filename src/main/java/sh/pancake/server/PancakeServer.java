@@ -84,8 +84,8 @@ public class PancakeServer implements IPancakeServer {
             throw new RuntimeException(e);
         }
 
-        this.modManager = new ModManager(Constants.MOD_DIRECTORY, serverLoader);
-        this.pluginManager = new PluginManager(Constants.PLUGIN_DIRECTORY, serverLoader);
+        this.modManager = new ModManager(this, Constants.MOD_DIRECTORY, serverLoader);
+        this.pluginManager = new PluginManager(this, Constants.PLUGIN_DIRECTORY, serverLoader);
 
         // ah yes pancake
         Mixins.addConfiguration("pancake-config.json");
@@ -132,7 +132,7 @@ public class PancakeServer implements IPancakeServer {
                     } catch (Exception e) {
                         LOGGER.error("Cannot load plugin from " + file.getName());
                     }
-            });
+        });
     }
 
 }

@@ -7,6 +7,8 @@
 package sh.pancake.server.plugin;
 
 public interface IPancakePlugin {
+
+    void init(PluginData data);
     
     void onLoad();
     void onUnload();
