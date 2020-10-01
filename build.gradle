@@ -15,6 +15,7 @@ buildscript {
 
     dependencies {
         classpath files('../storymap/build/libs/storymap-1.0.0.jar')
+        classpath files('../story-network-common/build/libs/story-network-common-1.0.0.jar')
         classpath 'com.google.code.gson:gson:2.8.6'
         classpath 'io.heartpattern:mcremapper:2.0.2-SNAPSHOT'
     }
@@ -105,6 +106,14 @@ shadowJar {
     configurations = [project.configurations.embed]
 
 }
+
+// Copy target_version so PancakeServer can identify it
+task createTargetVersion()  {
+    doLast {
+        new File("build/resources/main", "target_version").text = minecraft.version
+    }
+}
+compileJava.dependsOn createTargetVersion
 
 jar {
 

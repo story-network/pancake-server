@@ -18,7 +18,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.MixinEnvironment;
-import org.spongepowered.asm.mixin.Mixins;
 
 import io.heartpattern.mcremapper.MCRemapper;
 import io.heartpattern.mcremapper.model.LocalVariableFixType;
@@ -194,11 +193,11 @@ public class PancakeLauncher {
             return null;
         }
 
-        File ref = serverObjectStorage.getReference(version + "-server-mapping.txt");
+        String name = version + "-server-mapping.txt";
 
         byte[] rawServerMapping = null;
         try {
-            rawServerMapping = serverObjectStorage.read(ref.getName());
+            rawServerMapping = serverObjectStorage.read(name);
         } catch (IOException e) {
 
         }
@@ -209,7 +208,7 @@ public class PancakeLauncher {
 
             try {
                 rawServerMapping = DownloadUtil.fetchData(info.downloads.serverMappings.url);
-                serverObjectStorage.write(ref.getName(), rawServerMapping);
+                serverObjectStorage.write(name, rawServerMapping);
             } catch (IOException e) {
                 LOGGER.error("Cannot download server mapping for " + version + ". Cannot proceed more");
                 return null;
@@ -224,7 +223,7 @@ public class PancakeLauncher {
 
         File ref = serverObjectStorage.getReference(name);
 
-        if (!ref.exists() || recache) {
+        if (!serverObjectStorage.exists(name) || recache) {
             LOGGER.info("Patching server...");
 
             File rawMCServer = provideRawMinecraftServer(version, recache);
@@ -287,7 +286,7 @@ public class PancakeLauncher {
         serverClassLoader.getModder().initModder();
 
         this.launched = true;
-        server.start(args, serverClassLoader, this::finishMixinInit);
+        server.start(args, serverClassLoader, serverObjectStorage, this::finishMixinInit);
     }
 
     private void finishMixinInit() {

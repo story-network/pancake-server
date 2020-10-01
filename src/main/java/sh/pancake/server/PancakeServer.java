@@ -6,6 +6,7 @@
 
 package sh.pancake.server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,17 +16,30 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixins;
 
 import sh.pancake.classloader.ModdedClassLoader;
+import sh.pancake.common.storage.ObjectStorage;
 
 public class PancakeServer implements IPancakeServer {
 
     private static final Logger LOGGER = LogManager.getLogger("PancakeServer");
 
+    private static final String version;
+
+    static {
+        try {
+            version = new String(PancakeServer.class.getClassLoader().getResourceAsStream("target_version").readAllBytes());
+        } catch (IOException e) {
+            LOGGER.fatal("Cannot load target version");
+
+            throw new RuntimeException(e);
+        }
+    }
+
     public String getVersion() {
-        return "1.16.3";
+        return version;
     }
  
-    public void start(String[] args, ModdedClassLoader loader, Runnable finishMixinInit) {
-        LOGGER.info("Running on " + Runtime.version().toString());
+    public void start(String[] args, ModdedClassLoader loader, ObjectStorage serverDataStorage, Runnable finishMixinInit) {
+		LOGGER.info("Running on " + Runtime.version().toString());
         LOGGER.info("Total Memory: " + (Math.floor(Runtime.getRuntime().maxMemory() / 1024 / 1024) / 1024d) + " GB");
 
         LOGGER.info("Server version: " + getVersion());
