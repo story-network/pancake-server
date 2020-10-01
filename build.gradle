@@ -1,0 +1,130 @@
+/*
+ * Created on Sat Sep 26 2020
+ *
+ * Copyright (c) storycraft. Licensed under the MIT Licence.
+ */
+
+buildscript {
+    repositories {
+        jcenter()
+
+        maven {
+            url = 'https://maven.heartpattern.io/repository/maven-public/'
+        }
+    }
+
+    dependencies {
+        classpath files('../storymap/build/libs/storymap-1.0.0.jar')
+        classpath 'com.google.code.gson:gson:2.8.6'
+        classpath 'io.heartpattern:mcremapper:2.0.2-SNAPSHOT'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+}
+
+apply plugin: 'sh.pancake.storymap'
+
+// Info
+group 'sh.pancake'
+version '1.0.0'
+
+sourceCompatibility = 1.9
+targetCompatibility = 1.9
+
+compileJava.options.encoding = 'UTF-8'
+
+repositories {
+
+    jcenter()
+    mavenCentral()
+
+    maven {
+        name = 'sponge'
+        url = 'https://repo.spongepowered.org/maven'
+    }
+
+    maven {
+		name = 'Fabric'
+		url = 'http://maven.modmuss50.me/'
+	}
+
+    maven {
+        url = 'https://maven.heartpattern.io/repository/maven-public/'
+    }
+
+}
+
+minecraft {
+    version = '1.16.3'
+}
+
+configurations {
+    implementation.extendsFrom(embed)
+}
+
+dependencies {
+
+    embed project(':story-network-common')
+
+    // runtime mc deobfuscator
+    embed 'io.heartpattern:mcremapper:2.0.2-SNAPSHOT'
+
+    // mixin modding
+    embed('org.spongepowered:mixin:0.8') {
+        exclude module: 'launchwrapper'
+        exclude module: 'modlauncher'
+        exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
+    }
+    
+    embed group: 'com.google.guava', name: 'guava', version: '29.0-jre'
+
+    implementation 'com.google.code.gson:gson:2.8.6'
+
+    // log4j for logging
+    embed 'org.apache.logging.log4j:log4j-core:2.8.1'
+    embed 'org.apache.logging.log4j:log4j-api:2.8.1'
+    embed 'org.apache.logging.log4j:log4j-slf4j-impl:2.8.1'
+
+    // asm for mixin
+    implementation 'org.ow2.asm:asm:7.1'
+	implementation 'org.ow2.asm:asm-analysis:7.1'
+	implementation 'org.ow2.asm:asm-commons:7.1'
+	implementation 'org.ow2.asm:asm-tree:7.1'
+
+    // idk why but mixin exclude this
+	embed 'org.ow2.asm:asm-util:7.1'
+
+}
+
+shadowJar {
+
+    configurations = [project.configurations.embed]
+
+}
+
+jar {
+
+    finalizedBy shadowJar
+
+    manifest {
+        attributes 'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')'
+        attributes 'Main-Class': 'sh.pancake.example.Main'
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+
+        resources {
+            srcDir 'src/main/resources'
+        }
+
+    }
+}

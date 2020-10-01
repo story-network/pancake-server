@@ -1,0 +1,14 @@
+{
+    "required": true,
+    "minVersion": "0.6",
+    "package": "sh.pancake.mixin",
+    "compatibilityLevel": "JAVA_9",
+    "target": "@env(DEFAULT)",
+    "mixins": [
+      "MinecraftServerMixin"
+    ],
+    "injectors": {
+      "defaultRequire": 1
+    }
+  }
+  

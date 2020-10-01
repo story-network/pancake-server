@@ -1,0 +1,13 @@
+/*
+ * Created on Mon Sep 28 2020
+ *
+ * Copyright (c) storycraft. Licensed under the MIT Licence.
+ */
+
+rootProject.name = 'pancake-server'
+
+include ':story-network-common'
+include ':storymap'
+
+project(':story-network-common').projectDir = new File('../story-network-common')
+project(':storymap').projectDir = new File('../storymap')
