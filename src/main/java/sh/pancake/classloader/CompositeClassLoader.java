@@ -8,43 +8,36 @@ package sh.pancake.classloader;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
+import java.util.Iterator;
 
-public class CompositeClassLoader<T extends ClassLoader> extends ClassLoader {
+public class CompositeClassLoader extends ClassLoader {
     
     static {
         registerAsParallelCapable();
     }
 
-    private List<T> subLoaderList;
+    private ClassLoader classLoader;
+    private IClassLoaderProvider provider;
 
-    public CompositeClassLoader(ClassLoader parent) {
-        super(parent);
-        this.subLoaderList = new ArrayList<>();
+    public CompositeClassLoader(ClassLoader classLoader, IClassLoaderProvider provider) {
+        this.classLoader = classLoader;
+        this.provider = provider;
     }
 
-    public boolean isAdded(T loader) {
-        return subLoaderList.contains(loader);
-    }
-
-    public boolean addSubLoader(T loader) {
-        if (isAdded(loader)) return false;
-
-        return subLoaderList.add(loader);
-    }
-
-    public boolean removeSubLoader(T loader) {
-        return subLoaderList.remove(loader);
+    public IClassLoaderProvider getProvider() {
+        return provider;
     }
     
     @Override
     protected URL findResource(String name) {
-        URL url = null;
+        URL url = classLoader.getResource(name);
 
-        for (ClassLoader loader : subLoaderList) {
-            if ((url = loader.getResource(name)) != null) return url;
+        if (url != null) return url;
+
+        Iterator<ClassLoader> iter = provider.getLoaderIterator();
+        while (iter.hasNext()) {
+            if ((url = iter.next().getResource(name)) != null) return url;
         }
 
         return null;
@@ -52,23 +45,30 @@ public class CompositeClassLoader<T extends ClassLoader> extends ClassLoader {
 
     @Override
     protected Enumeration<URL> findResources(String name) throws IOException {
-        if (subLoaderList.size() < 1) throw new IOException();
+        Enumeration<URL> main = null;
+        try {
+            main = classLoader.getResources(name);
+        } catch (Exception e) {
+            
+        }
 
+        Iterator<ClassLoader> iter = provider.getLoaderIterator();
+
+        Enumeration<URL> current = main;
         return new Enumeration<URL>() {
 
-            private int i = 0;
-            private Enumeration<URL> currentEnumeration = null;
+            private Enumeration<URL> currentEnumeration = current;
 
             @Override
             public boolean hasMoreElements() {
                 try {
                     if (currentEnumeration == null) {
-                        currentEnumeration = subLoaderList.get(i).getResources(name);
+                        currentEnumeration = iter.next().getResources(name);
                     }
                 
                     return currentEnumeration.hasMoreElements();
                 } catch (Exception e) {
-                    if (++i < subLoaderList.size()) {
+                    if (iter.hasNext()) {
                         currentEnumeration = null;
                         return hasMoreElements();
                     }
@@ -81,12 +81,12 @@ public class CompositeClassLoader<T extends ClassLoader> extends ClassLoader {
             public URL nextElement() {
                 try {
                     if (currentEnumeration == null) {
-                        currentEnumeration = subLoaderList.get(i).getResources(name);
+                        currentEnumeration = iter.next().getResources(name);
                     }
                 
                     return currentEnumeration.nextElement();
                 } catch (Exception e) {
-                    if (++i < subLoaderList.size()) {
+                    if (iter.hasNext()) {
                         currentEnumeration = null;
                         return nextElement();
                     }
@@ -100,10 +100,17 @@ public class CompositeClassLoader<T extends ClassLoader> extends ClassLoader {
 
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
+        try {
+            return classLoader.loadClass(name);
+        } catch (Exception e) {
+
+        }
+
         Class<?> c = null;
 
-        for (ClassLoader loader : subLoaderList) {
-            if ((c = loader.loadClass(name)) != null) return c;
+        Iterator<ClassLoader> iter = provider.getLoaderIterator();
+        while (iter.hasNext()) {
+            if ((c = iter.next().loadClass(name)) != null) return c;
         }
 
         throw new ClassNotFoundException(name + " is undefined");

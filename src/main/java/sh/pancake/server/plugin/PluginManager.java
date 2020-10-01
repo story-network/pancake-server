@@ -18,7 +18,7 @@ import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import sh.pancake.classloader.CompositeClassLoader;
+import sh.pancake.classloader.ClassLoaderProvider;
 import sh.pancake.common.storage.DiskIOStorage;
 import sh.pancake.server.Constants;
 import sh.pancake.server.plugin.loader.PluginClassLoader;
@@ -34,22 +34,22 @@ public class PluginManager {
 
     private DiskIOStorage pluginStorage;
 
-    private CompositeClassLoader<PluginClassLoader> pluginRootClassLoader;
+    private ClassLoader serverClassLoader;
+    private ClassLoaderProvider pluginClassLoaderProvider;
 
     private Map<String, PluginData> pluginMap;
 
     public PluginManager(String pluginFolderName, ClassLoader serverClassLoader) {
         this.pluginStorage = new DiskIOStorage(pluginFolderName);
-        this.pluginRootClassLoader = new CompositeClassLoader<>(serverClassLoader);
+        
+        this.serverClassLoader = serverClassLoader;
+        this.pluginClassLoaderProvider = new ClassLoaderProvider();
+
         this.pluginMap = new ConcurrentHashMap<>();
     }
 
     public DiskIOStorage getPluginStorage() {
         return pluginStorage;
-    }
-
-    public CompositeClassLoader<PluginClassLoader> getPluginRootClassLoader() {
-        return pluginRootClassLoader;
     }
 
     public boolean hasPluginId(String pluginId) {
@@ -66,10 +66,9 @@ public class PluginManager {
             }
         }
 
-        PluginClassLoader loader = new PluginClassLoader(pluginFile.toURI().toURL(), pluginRootClassLoader);
+        PluginClassLoader loader = new PluginClassLoader(pluginFile.toURI().toURL(), serverClassLoader, pluginClassLoaderProvider);
 
         if (hasPluginId(info.getId())) {
-            loader.close();
             throw new Exception("Plugin id " + info.getId() + " conflict!!");
         }
 
@@ -108,13 +107,7 @@ public class PluginManager {
 
         pluginMap.remove(data.getInfo().getId());
 
-        try {
-            data.getPluginClassLoader().close();
-        } catch (Exception e) {
-            LOGGER.warn("Closing ClassLoader failed. Already closed?");
-        } finally {
-            LOGGER.info("Unloaded " + info.getName() + " (id: " + info.getId() + " )");
-        }
+        LOGGER.info("Unloaded " + info.getName() + " (id: " + info.getId() + " )");
     }
 
 }

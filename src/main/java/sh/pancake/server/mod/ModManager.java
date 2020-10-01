@@ -9,7 +9,7 @@ package sh.pancake.server.mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import sh.pancake.classloader.CompositeClassLoader;
+import sh.pancake.classloader.ClassLoaderProvider;
 import sh.pancake.common.storage.DiskIOStorage;
 import sh.pancake.server.mod.loader.ModClassLoader;
 
@@ -19,20 +19,18 @@ public class ModManager {
     
     private DiskIOStorage modStorage;
 
-    private CompositeClassLoader<ModClassLoader> modRootClassLoader;
+    private ClassLoader serverClassLoader;
+    private ClassLoaderProvider modClassLoaderProvider;
 
     public ModManager(String modFolderName, ClassLoader serverClassLoader) {
         this.modStorage = new DiskIOStorage(modFolderName);
         
-        this.modRootClassLoader = new CompositeClassLoader<>(serverClassLoader);
+        this.serverClassLoader = serverClassLoader;
+        this.modClassLoaderProvider = new ClassLoaderProvider();
     }
 
     public DiskIOStorage getModStorage() {
         return modStorage;
-    }
-
-    public CompositeClassLoader<ModClassLoader> getModRootClassLoader() {
-        return modRootClassLoader;
     }
 
 }
