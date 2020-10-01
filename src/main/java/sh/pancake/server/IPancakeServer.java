@@ -7,6 +7,7 @@ public interface IPancakeServer {
      // VERSION TO DOWNLOAD
      String getVersion();
  
-     void start(String[] args, ModdedClassLoader loader);
+     // Impl must call finishMixinInit after finshing mixin configuration
+     void start(String[] args, ModdedClassLoader loader, Runnable finishMixinInit);
 
 }

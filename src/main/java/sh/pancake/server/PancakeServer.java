@@ -6,8 +6,13 @@
 
 package sh.pancake.server;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.spongepowered.asm.mixin.Mixins;
 
 import sh.pancake.classloader.ModdedClassLoader;
 
@@ -19,12 +24,21 @@ public class PancakeServer implements IPancakeServer {
         return "1.16.3";
     }
  
-    public void start(String[] args, ModdedClassLoader loader) {
+    public void start(String[] args, ModdedClassLoader loader, Runnable finishMixinInit) {
         LOGGER.info("Running on " + Runtime.version().toString());
         LOGGER.info("Total Memory: " + (Math.floor(Runtime.getRuntime().maxMemory() / 1024 / 1024) / 1024d) + " GB");
 
         LOGGER.info("Server version: " + getVersion());
         LOGGER.info("Applying server arguments [ " + String.join(", ", args) + " ]");
+
+        // ah yes pancake
+        Mixins.addConfiguration("pancake-config.json");
+        finishMixinInit.run();
+
+        List<String> argList = new ArrayList<>(Arrays.asList(args));
+
+        // Kill ugly gui
+        argList.add("nogui");
 
         // Force to use our configuration
         loader.addIgnoreRes("log4j2.xml");
@@ -32,7 +46,7 @@ public class PancakeServer implements IPancakeServer {
         try {
             Class<?> serverClass = loader.loadClass("net.minecraft.server.Main");
 
-            serverClass.getMethod("main", String[].class).invoke(null, (Object) args);
+            serverClass.getMethod("main", String[].class).invoke(null, (Object) argList.toArray(new String[argList.size()]));
         } catch (Exception e) {
             LOGGER.info("Server start failed: " + e.getLocalizedMessage());
         }

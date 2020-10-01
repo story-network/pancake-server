@@ -284,8 +284,13 @@ public class PancakeLauncher {
         // Init mixin
         MixinBootstrap.init();
 
-        Mixins.addConfiguration("pancake-config.json");
+        serverClassLoader.getModder().initModder();
 
+        this.launched = true;
+        server.start(args, serverClassLoader, this::finishMixinInit);
+    }
+
+    private void finishMixinInit() {
         try {
 			Method m = MixinEnvironment.class.getDeclaredMethod("gotoPhase", MixinEnvironment.Phase.class);
             m.setAccessible(true);
@@ -294,11 +299,6 @@ public class PancakeLauncher {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
         }
-
-        serverClassLoader.getModder().initModder();
-
-        this.launched = true;
-        server.start(args, serverClassLoader);
     }
 
 }
