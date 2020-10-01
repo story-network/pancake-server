@@ -112,7 +112,7 @@ jar {
 
     manifest {
         attributes 'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')'
-        attributes 'Main-Class': 'sh.pancake.example.Main'
+        attributes 'Main-Class': 'sh.pancake.main.Main'
     }
 }
 
