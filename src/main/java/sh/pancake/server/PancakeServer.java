@@ -88,7 +88,7 @@ public class PancakeServer implements IPancakeServer {
             throw new RuntimeException(e);
         }
 
-        this.modManager = new ModManager(this, Constants.MOD_DIRECTORY, extraClassLoaderProvider);
+        this.modManager = new ModManager(this, Constants.MOD_DIRECTORY, serverLoader);
         this.pluginManager = new PluginManager(this, Constants.PLUGIN_DIRECTORY, extraClassLoaderProvider);
 
         // ah yes pancake

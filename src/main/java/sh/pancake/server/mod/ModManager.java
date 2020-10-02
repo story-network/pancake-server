@@ -19,11 +19,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixins;
 
-import sh.pancake.classloader.ClassLoaderProvider;
+import sh.pancake.classloader.ModdedClassLoader;
 import sh.pancake.common.storage.DiskIOStorage;
 import sh.pancake.server.Constants;
 import sh.pancake.server.PancakeServer;
-import sh.pancake.server.mod.loader.ModClassLoader;
 
 public class ModManager {
 
@@ -35,15 +34,15 @@ public class ModManager {
 
     private Map<String, ModData> modMap;
 
-    ClassLoaderProvider extraClassLoaderProvider;
+    private ModdedClassLoader serverClassLoader;
 
-    public ModManager(PancakeServer server, String modFolderName, ClassLoaderProvider extraClassLoaderProvider) {
+    public ModManager(PancakeServer server, String modFolderName, ModdedClassLoader serverClassLoader) {
         this.server = server;
         this.modStorage = new DiskIOStorage(modFolderName);
 
         this.modMap = new ConcurrentHashMap<>();
-        
-        this.extraClassLoaderProvider = extraClassLoaderProvider;
+
+        this.serverClassLoader = serverClassLoader;
     }
 
     public PancakeServer getServer() {
@@ -72,18 +71,24 @@ public class ModManager {
             }
         }
 
-        ModClassLoader loader = new ModClassLoader(modFile.toURI().toURL(), extraClassLoaderProvider);
-
+        if (info == null) {
+            LOGGER.info(modFile.getName() + " does not look like mod. Only adding to classpath");
+            serverClassLoader.addURL(modFile.toURI().toURL());
+            return;
+        }
+        
         if (hasModId(info.getId())) {
             throw new Exception("Plugin id " + info.getId() + " conflict!!");
         }
 
+        serverClassLoader.addURL(modFile.toURI().toURL());
+
         LOGGER.info("Constructing " + info.getName() + " (id: " + info.getId() + " )");
 
-        IPancakeMod mod = (IPancakeMod) loader.loadClass(info.getModClassName())
+        IPancakeMod mod = (IPancakeMod) serverClassLoader.loadClass(info.getModClassName())
                 .getConstructor().newInstance();
 
-        ModData data = new ModData(server, mod, info, new ModDataStorage(new File(modStorage.getDirectory(), info.getId())), loader);
+        ModData data = new ModData(server, mod, info, new ModDataStorage(new File(modStorage.getDirectory(), info.getId())));
 
         modMap.put(info.getId(), data);
 

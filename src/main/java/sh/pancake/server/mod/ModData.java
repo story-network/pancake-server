@@ -7,7 +7,6 @@
 package sh.pancake.server.mod;
 
 import sh.pancake.server.PancakeServer;
-import sh.pancake.server.mod.loader.ModClassLoader;
 
 public class ModData {
 
@@ -17,15 +16,12 @@ public class ModData {
     private ModInfo info;
     
     private ModDataStorage dataStorage;
-
-    private ModClassLoader modClassLoader;
     
-    public ModData(PancakeServer server, IPancakeMod mod, ModInfo info, ModDataStorage dataStorage, ModClassLoader modClassLoader) {
+    public ModData(PancakeServer server, IPancakeMod mod, ModInfo info, ModDataStorage dataStorage) {
         this.server = server;
         this.mod = mod;
         this.info = info;
         this.dataStorage = dataStorage;
-        this.modClassLoader = modClassLoader;
     }
 
     public PancakeServer getServer() {
@@ -42,10 +38,6 @@ public class ModData {
 
     public ModDataStorage getDataStorage() {
         return dataStorage;
-    }
-
-    public ModClassLoader getModClassLoader() {
-        return modClassLoader;
     }
 
 }
