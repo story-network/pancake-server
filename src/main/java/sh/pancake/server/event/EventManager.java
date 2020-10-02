@@ -68,8 +68,6 @@ public class EventManager {
 
             method.setAccessible(true);
 
-            LOGGER.info(method.getParameterTypes()[0]);
-
             register(method.getParameterTypes()[0], (event) -> {
                 try {
                     method.invoke(listener, event);
