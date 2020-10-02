@@ -7,5 +7,10 @@
 package sh.pancake.server.mod;
 
 public interface IPancakeMod {
+
+    void init(ModData data);
+    
+    void onLoad();
+    void onUnload();
     
 }

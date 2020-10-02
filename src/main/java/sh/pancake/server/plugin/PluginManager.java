@@ -62,6 +62,10 @@ public class PluginManager {
         return pluginMap.containsKey(pluginId);
     }
 
+    public PluginData getPluginData(String pluginId) {
+        return pluginMap.get(pluginId);
+    }
+
     public PluginData loadPlugin(File pluginFile) throws Exception {
         PluginInfo info = null;
 
@@ -82,8 +86,7 @@ public class PluginManager {
         IPancakePlugin plugin = (IPancakePlugin) loader.loadClass(info.getPluginClassName())
                 .getConstructor().newInstance();
 
-        PluginData data = new PluginData(server, plugin, info,
-                new PluginDataStorage(new File(pluginStorage.getDirectory(), info.getId())), loader);
+        PluginData data = new PluginData(server, plugin, info, new PluginDataStorage(new File(pluginStorage.getDirectory(), info.getId())), loader);
 
         pluginMap.put(info.getId(), data);
         plugin.init(data);
@@ -121,7 +124,7 @@ public class PluginManager {
             data.getPluginClassLoader().close();
             LOGGER.info("Unloaded " + info.getName() + " (id: " + info.getId() + " )");
         } catch (Exception e) {
-            LOGGER.info("Cannot close " + info.getName() + " (id: " + info.getId() + " )");
+            LOGGER.info("Cannot close " + info.getName() + " (id: " + info.getId() + " ). Assuming unloaded.");
             e.printStackTrace();
         }
 

@@ -4,7 +4,7 @@
     "package": "sh.pancake.mixin",
     "compatibilityLevel": "JAVA_9",
     "mixins": [
-      "MinecraftServerMixin"
+      
     ],
     "injectors": {
       "defaultRequire": 1

@@ -44,7 +44,7 @@ repositories {
     mavenCentral()
 
     maven {
-        name = 'sponge'
+        name = 'Sponge'
         url = 'https://repo.spongepowered.org/maven'
     }
 

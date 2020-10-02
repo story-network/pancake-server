@@ -7,17 +7,18 @@
 package sh.pancake.server.mod.loader;
 
 import java.net.URL;
-import java.net.URLClassLoader;
 
-public class ModClassLoader extends URLClassLoader {
+import sh.pancake.classloader.ClassLoaderProvider;
+import sh.pancake.classloader.CompositeURLClassLoader;
+
+public class ModClassLoader extends CompositeURLClassLoader {
 
     static {
         registerAsParallelCapable();
     }
     
-    public ModClassLoader(URL url) {
-        // Parent classloader presents using ClassLoaderProvider
-        super(new URL[] { url }, null);
+    public ModClassLoader(URL url, ClassLoaderProvider provider) {
+        super(new URL[] { url }, provider);
     }
 
 }

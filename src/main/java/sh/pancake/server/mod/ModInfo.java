@@ -17,6 +17,9 @@ public class ModInfo {
 
     @SerializedName("name")
     private String name;
+    
+    @SerializedName("description")
+    private String description = "";
 
     @SerializedName("authors")
     private List<String> authors;
@@ -25,7 +28,7 @@ public class ModInfo {
     private String modClassName;
 
     @SerializedName("mixin")
-    private String mixinConfigName;
+    private String mixinConfigName = "";
 
     public String getId() {
         return id;
@@ -33,6 +36,10 @@ public class ModInfo {
 
     public String getName() {
         return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public List<String> getAuthors() {

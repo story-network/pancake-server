@@ -18,6 +18,9 @@ public class PluginInfo {
     @SerializedName("name")
     private String name;
 
+    @SerializedName("description")
+    private String description = "";
+
     @SerializedName("authors")
     private List<String> authors;
 
@@ -30,6 +33,10 @@ public class PluginInfo {
 
     public String getName() {
         return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public List<String> getAuthors() {
