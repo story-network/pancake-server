@@ -6,7 +6,10 @@
 
 buildscript {
     repositories {
-        jcenter()
+        maven {
+            name = 'StoryNetwork'
+            url = 'https://raw.githubusercontent.com/story-network/maven/master/'
+        }
 
         maven {
             url = 'https://maven.heartpattern.io/repository/maven-public/'
@@ -14,10 +17,7 @@ buildscript {
     }
 
     dependencies {
-        classpath files('../storymap/build/libs/storymap-1.0.0.jar')
-        classpath files('../story-network-common/build/libs/story-network-common-1.0.0.jar')
-        classpath 'com.google.code.gson:gson:2.8.6'
-        classpath 'io.heartpattern:mcremapper:2.0.2-SNAPSHOT'
+        classpath 'sh.pancake:storymap:1.0.0'
     }
 }
 
@@ -57,6 +57,11 @@ repositories {
         url = 'https://maven.heartpattern.io/repository/maven-public/'
     }
 
+    maven {
+        name = 'StoryNetwork'
+        url = 'https://raw.githubusercontent.com/story-network/maven/master/'
+    }
+
 }
 
 minecraft {
@@ -69,7 +74,7 @@ configurations {
 
 dependencies {
 
-    embed project(':story-network-common')
+    embed 'sh.pancake:story-network-common:1.0.0'
 
     // Runtime mc deobfuscator
     embed 'io.heartpattern:mcremapper:2.0.2-SNAPSHOT'

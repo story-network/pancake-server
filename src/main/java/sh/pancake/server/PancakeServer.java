@@ -116,6 +116,16 @@ public class PancakeServer implements IPancakeServer {
         LOGGER.info("Loading mods from " + modDir.getAbsolutePath());
 
         modDir.mkdirs();
+
+        Lists.newArrayList(modDir.listFiles((File file) -> file.getName().endsWith(".jar"))).parallelStream()
+            .forEach((File file) -> {
+                try {
+                    modManager.loadMod(file);
+                } catch (Exception e) {
+                    LOGGER.error("Cannot load mod from " + file.getName());
+                }
+            }
+        );
     }
 
     protected void loadAllPlugin() {
@@ -126,13 +136,14 @@ public class PancakeServer implements IPancakeServer {
         pluginDir.mkdirs();
 
         Lists.newArrayList(pluginDir.listFiles((File file) -> file.getName().endsWith(".jar"))).parallelStream()
-                .forEach((File file) -> {
-                    try {
-                        pluginManager.loadPlugin(file);
-                    } catch (Exception e) {
-                        LOGGER.error("Cannot load plugin from " + file.getName());
-                    }
-        });
+            .forEach((File file) -> {
+                try {
+                    pluginManager.loadPlugin(file);
+                } catch (Exception e) {
+                    LOGGER.error("Cannot load plugin from " + file.getName());
+                }
+            }
+        );
     }
 
 }

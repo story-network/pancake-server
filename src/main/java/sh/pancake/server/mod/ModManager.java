@@ -6,6 +6,8 @@
 
 package sh.pancake.server.mod;
 
+import java.io.File;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,5 +42,9 @@ public class ModManager {
     public DiskIOStorage getModStorage() {
         return modStorage;
     }
+
+	public void loadMod(File file) {
+        
+	}
 
 }
