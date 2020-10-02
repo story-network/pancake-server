@@ -47,6 +47,12 @@ public class CompositeURLClassLoader extends URLClassLoader {
     public Enumeration<URL> findResources(String name) throws IOException {
         Enumeration<URL> main = null;
 
+        try {
+            main = super.findResources(name);
+        } catch (IOException e) {
+            
+        }
+
         Iterator<ClassLoader> iter = provider.getLoaderIterator();
 
         Enumeration<URL> current = main;
@@ -58,7 +64,11 @@ public class CompositeURLClassLoader extends URLClassLoader {
             public boolean hasMoreElements() {
                 try {
                     if (currentEnumeration == null) {
-                        currentEnumeration = iter.next().getResources(name);
+                        ClassLoader loader = iter.next();
+                        if (loader == CompositeURLClassLoader.this) loader = iter.next();
+
+                        // Just skip more duplication
+                        currentEnumeration = loader.getResources(name);
                     }
                 
                     return currentEnumeration.hasMoreElements();
@@ -76,7 +86,11 @@ public class CompositeURLClassLoader extends URLClassLoader {
             public URL nextElement() {
                 try {
                     if (currentEnumeration == null) {
-                        currentEnumeration = iter.next().getResources(name);
+                        ClassLoader loader = iter.next();
+                        if (loader == CompositeURLClassLoader.this) loader = iter.next();
+
+                        // Just skip more duplication
+                        currentEnumeration = loader.getResources(name);
                     }
                 
                     return currentEnumeration.nextElement();
