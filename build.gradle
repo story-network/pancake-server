@@ -146,3 +146,19 @@ sourceSets {
 
     }
 }
+
+publishing {
+    repositories {
+        maven {
+            name = 'StoryNetwork'
+            url = uri('../maven')
+        }
+    }
+
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'pancake-server'
+            from components.java
+        }
+    }
+}
