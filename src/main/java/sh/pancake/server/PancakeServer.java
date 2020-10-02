@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.Mixins;
 import sh.pancake.classloader.ClassLoaderProvider;
 import sh.pancake.classloader.ModdedClassLoader;
 import sh.pancake.common.storage.ObjectStorage;
+import sh.pancake.server.event.EventManager;
 import sh.pancake.server.mod.ModManager;
 import sh.pancake.server.plugin.PluginManager;
 
@@ -46,14 +47,21 @@ public class PancakeServer implements IPancakeServer {
     private ModManager modManager;
     private PluginManager pluginManager;
 
+    private EventManager eventManager;
+
     public PancakeServer() {
         this.serverLoader = null;
         this.modManager = null;
         this.pluginManager = null;
+        this.eventManager = null;
     }
 
     public String getVersion() {
         return version;
+    }
+
+    public EventManager getEventManager() {
+        return eventManager;
     }
 
     public ModManager getModManager() {
@@ -87,6 +95,8 @@ public class PancakeServer implements IPancakeServer {
             LOGGER.fatal("Cannot load server entrypoint: " + e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
+
+        this.eventManager = new EventManager();
 
         this.modManager = new ModManager(this, Constants.MOD_DIRECTORY, serverLoader);
         this.pluginManager = new PluginManager(this, Constants.PLUGIN_DIRECTORY, extraClassLoaderProvider);
