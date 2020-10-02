@@ -8,49 +8,44 @@ package sh.pancake.classloader;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Enumeration;
 import java.util.Iterator;
 
-public class CompositeClassLoader extends ClassLoader {
+public class CompositeURLClassLoader extends URLClassLoader {
     
     static {
         registerAsParallelCapable();
     }
 
-    private ClassLoader classLoader;
-    private IClassLoaderProvider provider;
+    private ClassLoaderProvider provider;
 
-    public CompositeClassLoader(ClassLoader classLoader, IClassLoaderProvider provider) {
-        this.classLoader = classLoader;
+    public CompositeURLClassLoader(URL[] urls, ClassLoaderProvider provider) {
+        // ClassLoaderProvider should provide parent classes too
+        super(urls, null);
         this.provider = provider;
+
+        provider.addSubLoader(this);
     }
 
-    public IClassLoaderProvider getProvider() {
-        return provider;
-    }
-    
     @Override
-    protected URL findResource(String name) {
-        URL url = classLoader.getResource(name);
+    public URL findResource(String name) {
+        URL url = super.findResource(name);
 
         if (url != null) return url;
 
         Iterator<ClassLoader> iter = provider.getLoaderIterator();
         while (iter.hasNext()) {
-            if ((url = iter.next().getResource(name)) != null) return url;
+            ClassLoader loader = iter.next();
+            if (loader != this && (url = loader.getResource(name)) != null) return url;
         }
 
         return null;
     }
 
     @Override
-    protected Enumeration<URL> findResources(String name) throws IOException {
+    public Enumeration<URL> findResources(String name) throws IOException {
         Enumeration<URL> main = null;
-        try {
-            main = classLoader.getResources(name);
-        } catch (Exception e) {
-            
-        }
 
         Iterator<ClassLoader> iter = provider.getLoaderIterator();
 
@@ -101,19 +96,33 @@ public class CompositeClassLoader extends ClassLoader {
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         try {
-            return classLoader.loadClass(name);
-        } catch (Exception e) {
+            return super.findClass(name);
+        } catch (ClassNotFoundException e) {
 
         }
-
-        Class<?> c = null;
 
         Iterator<ClassLoader> iter = provider.getLoaderIterator();
         while (iter.hasNext()) {
-            if ((c = iter.next().loadClass(name)) != null) return c;
+            ClassLoader loader = iter.next();
+
+            if (loader == this) continue;
+
+            try {
+                return Class.forName(name, true, loader);
+            } catch (Exception e) {
+
+            }
         }
 
         throw new ClassNotFoundException(name + " is undefined");
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+
+        provider.removeSubLoader(this);
+        provider = null;
     }
 
 }

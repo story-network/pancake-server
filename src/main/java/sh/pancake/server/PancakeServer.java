@@ -18,6 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixins;
 
+import sh.pancake.classloader.ClassLoaderProvider;
 import sh.pancake.classloader.ModdedClassLoader;
 import sh.pancake.common.storage.ObjectStorage;
 import sh.pancake.server.mod.ModManager;
@@ -62,10 +63,13 @@ public class PancakeServer implements IPancakeServer {
     public PluginManager getPluginManager() {
         return pluginManager;
     }
-
+    
     public void start(String[] args, ModdedClassLoader loader, ObjectStorage serverDataStorage,
             Runnable finishMixinInit) {
         this.serverLoader = loader;
+
+        ClassLoaderProvider extraClassLoaderProvider = new ClassLoaderProvider();
+        extraClassLoaderProvider.addSubLoader(this.serverLoader);
 
         LOGGER.info("Running on " + Runtime.version().toString());
         LOGGER.info("Total Memory: " + (Math.floor(Runtime.getRuntime().maxMemory() / 1024 / 1024) / 1024d) + " GB");
@@ -84,8 +88,8 @@ public class PancakeServer implements IPancakeServer {
             throw new RuntimeException(e);
         }
 
-        this.modManager = new ModManager(this, Constants.MOD_DIRECTORY, serverLoader);
-        this.pluginManager = new PluginManager(this, Constants.PLUGIN_DIRECTORY, serverLoader);
+        this.modManager = new ModManager(this, Constants.MOD_DIRECTORY, extraClassLoaderProvider);
+        this.pluginManager = new PluginManager(this, Constants.PLUGIN_DIRECTORY, extraClassLoaderProvider);
 
         // ah yes pancake
         Mixins.addConfiguration("pancake-config.json");
@@ -123,6 +127,7 @@ public class PancakeServer implements IPancakeServer {
                     modManager.loadMod(file);
                 } catch (Exception e) {
                     LOGGER.error("Cannot load mod from " + file.getName());
+                    e.printStackTrace();
                 }
             }
         );
@@ -141,6 +146,7 @@ public class PancakeServer implements IPancakeServer {
                     pluginManager.loadPlugin(file);
                 } catch (Exception e) {
                     LOGGER.error("Cannot load plugin from " + file.getName());
+                    e.printStackTrace();
                 }
             }
         );

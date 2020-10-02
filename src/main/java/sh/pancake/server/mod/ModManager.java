@@ -24,15 +24,13 @@ public class ModManager {
     
     private DiskIOStorage modStorage;
 
-    private ClassLoader serverClassLoader;
-    private ClassLoaderProvider modClassLoaderProvider;
+    ClassLoaderProvider extraClassLoaderProvider;
 
-    public ModManager(PancakeServer server, String modFolderName, ClassLoader serverClassLoader) {
+    public ModManager(PancakeServer server, String modFolderName, ClassLoaderProvider extraClassLoaderProvider) {
         this.server = server;
         this.modStorage = new DiskIOStorage(modFolderName);
         
-        this.serverClassLoader = serverClassLoader;
-        this.modClassLoaderProvider = new ClassLoaderProvider();
+        this.extraClassLoaderProvider = extraClassLoaderProvider;
     }
 
     public PancakeServer getServer() {

@@ -7,19 +7,18 @@
 package sh.pancake.server.plugin.loader;
 
 import java.net.URL;
-import java.net.URLClassLoader;
 
-import sh.pancake.classloader.CompositeClassLoader;
-import sh.pancake.classloader.IClassLoaderProvider;
+import sh.pancake.classloader.ClassLoaderProvider;
+import sh.pancake.classloader.CompositeURLClassLoader;
 
-public class PluginClassLoader extends CompositeClassLoader {
+public class PluginClassLoader extends CompositeURLClassLoader {
 
     static {
         registerAsParallelCapable();
     }
     
-    public PluginClassLoader(URL url, ClassLoader parent, IClassLoaderProvider provider) {
-        super(new URLClassLoader(new URL[] { url }, parent), provider);
+    public PluginClassLoader(URL url, ClassLoaderProvider provider) {
+        super(new URL[] { url }, provider);
     }
 
 }

@@ -37,19 +37,17 @@ public class PluginManager {
 
     private DiskIOStorage pluginStorage;
 
-    private ClassLoader serverClassLoader;
-    private ClassLoaderProvider pluginClassLoaderProvider;
-
     private Map<String, PluginData> pluginMap;
 
-    public PluginManager(PancakeServer server, String pluginFolderName, ClassLoader serverClassLoader) {
+    ClassLoaderProvider extraClassLoaderProvider;
+
+    public PluginManager(PancakeServer server, String pluginFolderName, ClassLoaderProvider extraClassLoaderProvider) {
         this.server = server;
         this.pluginStorage = new DiskIOStorage(pluginFolderName);
-        
-        this.serverClassLoader = serverClassLoader;
-        this.pluginClassLoaderProvider = new ClassLoaderProvider();
 
         this.pluginMap = new ConcurrentHashMap<>();
+
+        this.extraClassLoaderProvider = extraClassLoaderProvider;
     }
 
     public PancakeServer getServer() {
@@ -74,17 +72,18 @@ public class PluginManager {
             }
         }
 
-        PluginClassLoader loader = new PluginClassLoader(pluginFile.toURI().toURL(), serverClassLoader, pluginClassLoaderProvider);
+        PluginClassLoader loader = new PluginClassLoader(pluginFile.toURI().toURL(), extraClassLoaderProvider);
 
         if (hasPluginId(info.getId())) {
             throw new Exception("Plugin id " + info.getId() + " conflict!!");
         }
 
         LOGGER.info("Constructing " + info.getName() + " (id: " + info.getId() + " )");
-        IPancakePlugin plugin = (IPancakePlugin) loader.loadClass(info.getPluginClassName()).getConstructor()
-                .newInstance();
+        IPancakePlugin plugin = (IPancakePlugin) loader.loadClass(info.getPluginClassName())
+                .getConstructor().newInstance();
 
-        PluginData data = new PluginData(server, plugin, info, new PluginDataStorage(new File(pluginStorage.getDirectory(), info.getId())), loader);
+        PluginData data = new PluginData(server, plugin, info,
+                new PluginDataStorage(new File(pluginStorage.getDirectory(), info.getId())), loader);
 
         pluginMap.put(info.getId(), data);
         plugin.init(data);
@@ -118,7 +117,15 @@ public class PluginManager {
 
         pluginMap.remove(data.getInfo().getId());
 
-        LOGGER.info("Unloaded " + info.getName() + " (id: " + info.getId() + " )");
+        try {
+            data.getPluginClassLoader().close();
+            LOGGER.info("Unloaded " + info.getName() + " (id: " + info.getId() + " )");
+        } catch (Exception e) {
+            LOGGER.info("Cannot close " + info.getName() + " (id: " + info.getId() + " )");
+            e.printStackTrace();
+        }
+
+        
     }
 
 }
