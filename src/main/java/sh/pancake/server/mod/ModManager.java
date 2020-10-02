@@ -94,7 +94,11 @@ public class ModManager {
 
         String mixinConfigName = info.getMixinConfigName();
         if (!mixinConfigName.isBlank()) {
-            Mixins.addConfiguration(mixinConfigName);
+            try {
+                Mixins.addConfiguration(mixinConfigName);
+            } catch (Exception e) {
+                LOGGER.error("Cannot apply mixin for " + info.getName() + " mod can work incorrectly");
+            }
         }
 
         mod.init(data);
