@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -66,6 +67,10 @@ public class PluginManager {
         return pluginMap.get(pluginId);
     }
 
+    public void forEach(Consumer<PluginData> func) {
+        pluginMap.values().forEach(func);
+    }
+
     public PluginData loadPlugin(File pluginFile) throws Exception {
         PluginInfo info = null;
 
@@ -95,6 +100,8 @@ public class PluginManager {
         plugin.onLoad();
 
         LOGGER.info(info.getName() + " has been loaded");
+
+        if (server.isMCInitialized()) plugin.onServerInitialized();
 
         return data;
     }

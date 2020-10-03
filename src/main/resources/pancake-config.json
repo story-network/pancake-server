@@ -1,10 +1,11 @@
 {
     "required": true,
     "minVersion": "0.6",
-    "package": "sh.pancake.mixin",
+    "package": "sh.pancake.server.mixin",
     "compatibilityLevel": "JAVA_9",
-    "mixins": [
-      
+    "server": [
+      "CommandsMixin",
+      "DedicatedServerMixin"
     ],
     "injectors": {
       "defaultRequire": 1

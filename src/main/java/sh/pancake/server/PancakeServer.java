@@ -18,9 +18,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixins;
 
+import net.minecraft.server.dedicated.DedicatedServer;
 import sh.pancake.classloader.ClassLoaderProvider;
 import sh.pancake.classloader.ModdedClassLoader;
 import sh.pancake.common.storage.ObjectStorage;
+import sh.pancake.server.command.CommandManager;
 import sh.pancake.server.event.EventManager;
 import sh.pancake.server.mod.ModManager;
 import sh.pancake.server.plugin.PluginManager;
@@ -47,13 +49,24 @@ public class PancakeServer implements IPancakeServer {
     private ModManager modManager;
     private PluginManager pluginManager;
 
+    private CommandManager commandManager;
+
     private EventManager eventManager;
+
+    private DedicatedServer minecraftServer;
+    private boolean mcInitialized;
 
     public PancakeServer() {
         this.serverLoader = null;
+
         this.modManager = null;
         this.pluginManager = null;
+
         this.eventManager = null;
+        this.commandManager = null;
+
+        this.minecraftServer = null;
+        this.mcInitialized = false;
     }
 
     public String getVersion() {
@@ -70,6 +83,19 @@ public class PancakeServer implements IPancakeServer {
 
     public PluginManager getPluginManager() {
         return pluginManager;
+    }
+
+    public CommandManager getCommandManager() {
+        return commandManager;
+    }
+
+    // You can safely call getMinecraftServer() when it returns true
+    public boolean isMCInitialized() {
+        return mcInitialized;
+    }
+
+    public DedicatedServer getMinecraftServer() {
+        return minecraftServer;
     }
     
     public void start(String[] args, ModdedClassLoader loader, ObjectStorage serverDataStorage,
@@ -88,6 +114,9 @@ public class PancakeServer implements IPancakeServer {
         // Force to use our configuration
         serverLoader.addIgnoreRes("log4j2.xml");
 
+        // We have our own brigadier embed!
+        serverLoader.addIgnoreRes("com/mojang/brigadier");
+
         Class<?> serverClass = null;
         try {
             serverClass = serverLoader.loadClass("net.minecraft.server.Main");
@@ -95,6 +124,8 @@ public class PancakeServer implements IPancakeServer {
             LOGGER.fatal("Cannot load server entrypoint: " + e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
+
+        this.commandManager = new CommandManager();
 
         this.eventManager = new EventManager();
 
@@ -163,6 +194,18 @@ public class PancakeServer implements IPancakeServer {
                 }
             }
         );
+    }
+
+    public void onMCServerInit(DedicatedServer server) {
+        if (this.mcInitialized) throw new IllegalStateException("onMCServerInit should not called twice");
+        this.mcInitialized = true;
+
+        this.minecraftServer = server;
+
+        LOGGER.info("MinecraftServer created!!");
+
+        modManager.forEach((modData) -> modData.getMod().onServerInitialized());
+        pluginManager.forEach((pluginData) -> pluginData.getPlugin().onServerInitialized());
     }
 
 }

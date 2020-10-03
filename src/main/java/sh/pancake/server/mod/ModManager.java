@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -61,6 +62,10 @@ public class ModManager {
         return modMap.get(modId);
     }
 
+    public void forEach(Consumer<ModData> func) {
+        modMap.values().forEach(func);
+    }
+
 	public void loadMod(File modFile) throws Exception {
         ModInfo info = null;
 
@@ -110,6 +115,8 @@ public class ModManager {
         mod.onLoad();
 
         LOGGER.info(info.getName() + " has been loaded");
+
+        if (server.isMCInitialized()) mod.onServerInitialized();
 
 	}
 

@@ -13,5 +13,7 @@ public class Constants {
 
     public static final String PLUGIN_DIRECTORY = "plugins";
     public static final String PLUGIN_CONFIG = "plugin.json";
+
+    public static final String PANCAKE_COMMAND_ROOT = "pancake_command_root";
     
 }
