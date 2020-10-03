@@ -74,7 +74,7 @@ public class ModManager {
         }
 
         if (info == null) {
-            LOGGER.info(modFile.getName() + " does not look like mod. Only adding to classpath");
+            LOGGER.info(modFile.getName() + " doesn't look like a mod. Only adding to classpath");
             serverClassLoader.addURL(modFile.toURI().toURL());
             return;
         }
