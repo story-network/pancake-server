@@ -6,7 +6,6 @@
 
 package sh.pancake.server.event;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.Map;
@@ -40,11 +39,11 @@ public class EventManager {
         return getEventMap(caller.getClass().getClassLoader());
     }
 
-    public <T>void register(Class<T> cl, IEventListenerFunc<T> func, EventPriority priority) {
+    public <R extends IEvent>void register(Class<R> cl, IEventListenerFunc<R> func, EventPriority priority) {
         getEventMapFor(func).register(cl, func, priority);
     }
 
-    public <T>void register(Class<T> cl, IEventListenerFunc<T> func) {
+    public <R extends IEvent>void register(Class<R> cl, IEventListenerFunc<R> func) {
         register(cl, func, EventPriority.NORMAL);
     }
 
@@ -68,7 +67,14 @@ public class EventManager {
 
             method.setAccessible(true);
 
-            register(method.getParameterTypes()[0], (event) -> {
+            Class<?> cl = method.getParameterTypes()[0];
+
+            if (!cl.isAssignableFrom(IEvent.class)) {
+                LOGGER.warn("Skipping event function " + method.getName() + " at" + listener.getClass().getName() + ", parameter should implements IEvent");
+                continue;
+            }
+
+            register((Class<? extends IEvent>) cl, (event) -> {
                 try {
                     method.invoke(listener, event);
                 } catch (Exception e) {
@@ -78,11 +84,11 @@ public class EventManager {
         }
     }
 
-    public <T>void unregister(Class<T> cl, IEventListenerFunc<T> func, EventPriority priority) {
+    public <R extends IEvent>void unregister(Class<R> cl, IEventListenerFunc<R> func, EventPriority priority) {
         getEventMapFor(func).unregister(cl, func, priority);
     }
 
-    public <T>void unregister(Class<T> cl, IEventListenerFunc<T> func) {
+    public <R extends IEvent>void unregister(Class<R> cl, IEventListenerFunc<R> func) {
         unregister(cl, func, EventPriority.NORMAL);
     }
 
@@ -98,7 +104,11 @@ public class EventManager {
 
             method.setAccessible(true);
 
-            unregister(method.getParameterTypes()[0], (event) -> {
+            Class<?> cl = method.getParameterTypes()[0];
+
+            if (cl.isAssignableFrom(IEvent.class)) continue;
+
+            unregister((Class<? extends IEvent>) cl, (event) -> {
                 try {
                     method.invoke(listener, event);
                 } catch (Exception e) {
@@ -108,11 +118,12 @@ public class EventManager {
         }
     }
 
-    public <T>void callEvent(T event) {
+    public <T extends IEvent>void callEvent(T event) {
         Iterator<EventMap> eventMapIter = classLoaderMap.values().iterator();
 
         while (eventMapIter.hasNext()) {
-            eventMapIter.next().getInvokerFor((Class<T>) event.getClass()).invoke(event);
+            EventInvoker<T> cl = (EventInvoker<T>) eventMapIter.next().getInvokerFor(event.getClass());
+            cl.invoke(event);
         }
     }
 
@@ -124,16 +135,16 @@ public class EventManager {
             this.eventMap = new ConcurrentHashMap<>();
         }
 
-        public <T>EventInvoker<T> getInvokerFor(Class<T> clazz) {
+        public <T extends IEvent>EventInvoker<T> getInvokerFor(Class<? extends T> clazz) {
             return (EventInvoker<T>) eventMap.computeIfAbsent(clazz, key -> new EventInvoker<T>());
         }
 
-        public <T>void register(Class<T> cl, IEventListenerFunc<T> func, EventPriority priority) {
+        public <T extends IEvent>void register(Class<T> cl, IEventListenerFunc<T> func, EventPriority priority) {
             EventInvoker<T> invoker = getInvokerFor(cl);
             invoker.register(func, priority);
         }
 
-        public <T>void unregister(Class<T> cl, IEventListenerFunc<T> func, EventPriority priority) {
+        public <T extends IEvent>void unregister(Class<T> cl, IEventListenerFunc<T> func, EventPriority priority) {
             EventInvoker<T> invoker = getInvokerFor(cl);
             invoker.unregister(func, priority);
         }

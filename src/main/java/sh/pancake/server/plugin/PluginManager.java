@@ -128,7 +128,8 @@ public class PluginManager {
             e.printStackTrace();
         }
 
-        
+        // run gc to clean additional things
+        System.gc();
     }
 
 }
