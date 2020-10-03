@@ -49,12 +49,12 @@ repositories {
     }
 
     maven {
-		name = 'Fabric'
-		url = 'http://maven.modmuss50.me/'
-	}
+        url = 'https://maven.heartpattern.io/repository/maven-public/'
+    }
 
     maven {
-        url = 'https://maven.heartpattern.io/repository/maven-public/'
+        name = 'Mojang'
+        url = 'https://libraries.minecraft.net'
     }
 
     maven {
@@ -78,6 +78,9 @@ dependencies {
 
     // Runtime mc deobfuscator
     embed 'io.heartpattern:mcremapper:2.0.2-SNAPSHOT'
+
+    // MC Command engine (already included but but embed latest)
+    embed 'com.mojang:brigadier:1.0.17'
 
     // Mixin modding
     embed('org.spongepowered:mixin:0.8') {
