@@ -66,8 +66,10 @@ public class ModManager {
 
         try (JarFile pluginJar = new JarFile(modFile.getAbsolutePath())) {
             ZipEntry configEntry = pluginJar.getEntry(Constants.MOD_CONFIG);
-            try (InputStream configStream = pluginJar.getInputStream(configEntry)) {
-                info = new Gson().fromJson(new String(configStream.readAllBytes()), ModInfo.class);
+            if (configEntry != null) {
+                try (InputStream configStream = pluginJar.getInputStream(configEntry)) {
+                    info = new Gson().fromJson(new String(configStream.readAllBytes()), ModInfo.class);
+                }
             }
         }
 
