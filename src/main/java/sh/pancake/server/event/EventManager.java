@@ -7,6 +7,7 @@
 package sh.pancake.server.event;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -69,7 +70,7 @@ public class EventManager {
 
             Class<?> cl = method.getParameterTypes()[0];
 
-            if (!cl.isAssignableFrom(IEvent.class)) {
+            if (!Arrays.asList(cl.getInterfaces()).contains(IEvent.class)) {
                 LOGGER.warn("Skipping event function " + method.getName() + " at" + listener.getClass().getName() + ", parameter should implements IEvent");
                 continue;
             }
@@ -106,7 +107,7 @@ public class EventManager {
 
             Class<?> cl = method.getParameterTypes()[0];
 
-            if (cl.isAssignableFrom(IEvent.class)) continue;
+            if (!Arrays.asList(cl.getInterfaces()).contains(IEvent.class)) continue;
 
             unregister((Class<? extends IEvent>) cl, (event) -> {
                 try {

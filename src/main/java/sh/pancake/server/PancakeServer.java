@@ -135,9 +135,12 @@ public class PancakeServer implements IPancakeServer {
             .forEach((File file) -> {
                 try {
                     modManager.loadMod(file);
-                } catch (Exception e) {
-                    LOGGER.error("Cannot load mod from " + file.getName());
-                    e.printStackTrace();
+                } catch (Throwable t) {
+                    LOGGER.fatal("Cannot load mod from " + file.getName());
+                    LOGGER.fatal("Server cannot start with mod error!!");
+                    t.printStackTrace();
+
+                    throw new RuntimeException(t);
                 }
             }
         );
@@ -154,9 +157,9 @@ public class PancakeServer implements IPancakeServer {
             .forEach((File file) -> {
                 try {
                     pluginManager.loadPlugin(file);
-                } catch (Exception e) {
+                } catch (Throwable t) {
                     LOGGER.error("Cannot load plugin from " + file.getName());
-                    e.printStackTrace();
+                    t.printStackTrace();
                 }
             }
         );
