@@ -19,10 +19,17 @@ import sh.pancake.server.PancakeServer;
 public abstract class DedicatedServerMixin {
 
     @Inject(method = "initServer", at = @At("HEAD"))
-    void onInitServer(CallbackInfoReturnable<Boolean> info) {
+    void onPreInitServer(CallbackInfoReturnable<Boolean> info) {
         PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
 
-        server.onMCServerInit((DedicatedServer) (Object) this);
+        server.onPreMCServerInit((DedicatedServer) (Object) this);
+    }
+
+    @Inject(method = "initServer", at = @At("RETURN"))
+    void onPostInitServer(CallbackInfoReturnable<Boolean> info) {
+        PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        server.onPostMCServerInit((DedicatedServer) (Object) this);
     }
 
 }

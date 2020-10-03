@@ -23,6 +23,7 @@ import sh.pancake.classloader.ClassLoaderProvider;
 import sh.pancake.common.storage.DiskIOStorage;
 import sh.pancake.server.Constants;
 import sh.pancake.server.PancakeServer;
+import sh.pancake.server.ServerStartStatus;
 import sh.pancake.server.plugin.loader.PluginClassLoader;
 
 /*
@@ -101,7 +102,13 @@ public class PluginManager {
 
         LOGGER.info(info.getName() + " has been loaded");
 
-        if (server.isMCInitialized()) plugin.onServerInitialized();
+        if (server.getStartStatus() != ServerStartStatus.NOT_STARTED) {
+            plugin.onServerPreInit();
+
+            if (server.getStartStatus() != ServerStartStatus.PREINIT) {
+                plugin.onServerPostInit();
+            }
+        }
 
         return data;
     }

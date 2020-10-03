@@ -44,6 +44,8 @@ public class PancakeServer implements IPancakeServer {
         }
     }
 
+    private long startTime;
+
     private ModdedClassLoader serverLoader;
 
     private ModManager modManager;
@@ -54,9 +56,11 @@ public class PancakeServer implements IPancakeServer {
     private EventManager eventManager;
 
     private DedicatedServer minecraftServer;
-    private boolean mcInitialized;
+    private ServerStartStatus startStatus;
 
     public PancakeServer() {
+        this.startTime = -1;
+
         this.serverLoader = null;
 
         this.modManager = null;
@@ -66,7 +70,11 @@ public class PancakeServer implements IPancakeServer {
         this.commandManager = null;
 
         this.minecraftServer = null;
-        this.mcInitialized = false;
+        this.startStatus = ServerStartStatus.NOT_STARTED;
+    }
+
+    public long getStartTime() {
+        return startTime;
     }
 
     public String getVersion() {
@@ -89,9 +97,9 @@ public class PancakeServer implements IPancakeServer {
         return commandManager;
     }
 
-    // You can safely call getMinecraftServer() when it returns true
-    public boolean isMCInitialized() {
-        return mcInitialized;
+    // You can safely call getMinecraftServer() when it does not return NOT_STARTED
+    public ServerStartStatus getStartStatus() {
+        return startStatus;
     }
 
     public DedicatedServer getMinecraftServer() {
@@ -100,6 +108,8 @@ public class PancakeServer implements IPancakeServer {
     
     public void start(String[] args, ModdedClassLoader loader, ObjectStorage serverDataStorage,
             Runnable finishMixinInit) {
+        this.startTime = System.currentTimeMillis();
+
         this.serverLoader = loader;
 
         ClassLoaderProvider extraClassLoaderProvider = new ClassLoaderProvider();
@@ -124,6 +134,8 @@ public class PancakeServer implements IPancakeServer {
             LOGGER.fatal("Cannot load server entrypoint: " + e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
+
+        this.startStatus = ServerStartStatus.NOT_STARTED;
 
         this.commandManager = new CommandManager();
 
@@ -196,16 +208,30 @@ public class PancakeServer implements IPancakeServer {
         );
     }
 
-    public void onMCServerInit(DedicatedServer server) {
-        if (this.mcInitialized) throw new IllegalStateException("onMCServerInit should not called twice");
-        this.mcInitialized = true;
+    public void onPreMCServerInit(DedicatedServer server) {
+        if (startStatus != ServerStartStatus.NOT_STARTED) throw new IllegalStateException("Server is already started status?!");
+        this.startStatus = ServerStartStatus.PREINIT;
 
         this.minecraftServer = server;
 
-        LOGGER.info("MinecraftServer created!!");
+        LOGGER.info("MinecraftServer initialized. Performing pre init...");
 
-        modManager.forEach((modData) -> modData.getMod().onServerInitialized());
-        pluginManager.forEach((pluginData) -> pluginData.getPlugin().onServerInitialized());
+        modManager.forEach((modData) -> modData.getMod().onServerPreInit());
+        pluginManager.forEach((pluginData) -> pluginData.getPlugin().onServerPreInit());
     }
+
+	public void onPostMCServerInit(DedicatedServer dedicatedServer) {
+        if (startStatus != ServerStartStatus.PREINIT) throw new IllegalStateException("MinecraftServer is not Initialized");
+        if (dedicatedServer != this.minecraftServer) throw new IllegalStateException("Different MinecraftServer instance??");
+        this.startStatus = ServerStartStatus.POSTINIT;
+
+        LOGGER.info("Performing post init...");
+
+        modManager.forEach((modData) -> modData.getMod().onServerPostInit());
+        pluginManager.forEach((pluginData) -> pluginData.getPlugin().onServerPostInit());
+
+        this.startStatus = ServerStartStatus.STARTED;
+        LOGGER.info("MinecraftServer started!! Took " + ((System.currentTimeMillis() - startTime) / 1000f) + "s.");
+	}
 
 }

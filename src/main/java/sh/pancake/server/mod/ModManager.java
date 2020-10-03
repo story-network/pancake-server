@@ -24,6 +24,7 @@ import sh.pancake.classloader.ModdedClassLoader;
 import sh.pancake.common.storage.DiskIOStorage;
 import sh.pancake.server.Constants;
 import sh.pancake.server.PancakeServer;
+import sh.pancake.server.ServerStartStatus;
 
 public class ModManager {
 
@@ -116,7 +117,13 @@ public class ModManager {
 
         LOGGER.info(info.getName() + " has been loaded");
 
-        if (server.isMCInitialized()) mod.onServerInitialized();
+        if (server.getStartStatus() != ServerStartStatus.NOT_STARTED) {
+            mod.onServerPreInit();
+
+            if (server.getStartStatus() != ServerStartStatus.PREINIT) {
+                mod.onServerPostInit();
+            }
+        }
 
 	}
 

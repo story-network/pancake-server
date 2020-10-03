@@ -31,9 +31,17 @@ public interface IPancakePlugin {
     }
 
     /*
-     * Invoked after server initialized from PancakeServer
+     * Invoked after server initialized
      */
-    default void onServerInitialized() {
+    default void onServerPreInit() {
+
+    }
+
+    /*
+     * Invoked after server successfully started
+     * It called after a log like "Done (6.755s)!"
+     */
+    default void onServerPostInit() {
 
     }
 
