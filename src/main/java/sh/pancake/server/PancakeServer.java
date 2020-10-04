@@ -231,7 +231,7 @@ public class PancakeServer implements IPancakeServer {
         pluginManager.forEach((pluginData) -> pluginData.getPlugin().onServerPostInit());
 
         this.startStatus = ServerStartStatus.STARTED;
-        LOGGER.info("MinecraftServer started!! Took " + ((System.currentTimeMillis() - startTime) / 1000f) + "s.");
+        LOGGER.info("MinecraftServer started!! Took " + ((System.currentTimeMillis() - startTime) / 1000f) + "s");
 	}
 
 }

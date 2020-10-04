@@ -4,8 +4,9 @@
     "package": "sh.pancake.server.mixin",
     "compatibilityLevel": "JAVA_9",
     "server": [
-      "CommandsMixin",
-      "DedicatedServerMixin"
+      "command.CommandsMixin",
+      "command.ServerGamePacketListenerImplMixin",
+      "DedicatedServerMixin",
     ],
     "injectors": {
       "defaultRequire": 1

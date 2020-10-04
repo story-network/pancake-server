@@ -6,7 +6,9 @@
 
 package sh.pancake.server.plugin;
 
-public interface IPancakePlugin {
+import sh.pancake.server.IPancakeExtra;
+
+public interface IPancakePlugin extends IPancakeExtra {
 
     /*
      * Called right after initialized
@@ -15,34 +17,5 @@ public interface IPancakePlugin {
      * 
      */
     void init(PluginData data);
-    
-    /*
-     * Invoked after loaded by PluginManager
-     */
-    default void onLoad() {
-
-    }
-
-    /*
-     * Invoked before get unloaded by PluginManager
-     */
-    default void onUnload() {
-
-    }
-
-    /*
-     * Invoked after server initialized
-     */
-    default void onServerPreInit() {
-
-    }
-
-    /*
-     * Invoked after server successfully started
-     * It called after a log like "Done (6.755s)!"
-     */
-    default void onServerPostInit() {
-
-    }
 
 }

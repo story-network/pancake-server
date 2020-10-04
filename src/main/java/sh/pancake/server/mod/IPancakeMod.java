@@ -6,7 +6,9 @@
 
 package sh.pancake.server.mod;
 
-public interface IPancakeMod {
+import sh.pancake.server.IPancakeExtra;
+
+public interface IPancakeMod extends IPancakeExtra {
 
     /*
      * Called right after initialized
@@ -15,34 +17,5 @@ public interface IPancakeMod {
      * 
      */
     void init(ModData data);
-
-    /*
-     * Invoked after loaded by ModManager
-     */
-    default void onLoad() {
-
-    }
-
-    /*
-     * Invoked before get unloaded by ModManager
-     */
-    default void onUnload() {
-
-    }
-
-    /*
-     * Invoked after server initialized
-     */
-    default void onServerPreInit() {
-
-    }
-
-    /*
-     * Invoked after server successfully started
-     * It called after a log like "Done (6.755s)!"
-     */
-    default void onServerPostInit() {
-
-    }
     
 }
