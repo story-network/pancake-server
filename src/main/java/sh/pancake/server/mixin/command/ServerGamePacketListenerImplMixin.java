@@ -13,6 +13,7 @@ import java.util.List;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestion;
 import com.mojang.brigadier.suggestion.Suggestions;
 
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket;
@@ -79,11 +81,31 @@ public abstract class ServerGamePacketListenerImplMixin {
         });
     }
 
-    @Inject(method = "handleCommand", at = @At("RETURN"))
+    @Inject(method = "handleCommand", at = @At("HEAD"), cancellable = true)
     private void onHandleCommand(String rawCommand, CallbackInfo info) {
+        CommandSourceStack source = player.createCommandSourceStack();
+        
         PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
 
-        server.getCommandManager().performCommand(player.createCommandSourceStack(), rawCommand);
+        int executionCount = 0;
+
+        StringReader reader = new StringReader(rawCommand);
+        if (reader.canRead() && reader.peek() == '/')
+            reader.skip();
+
+        Iterator<CommandDispatcher<CommandSourceStack>> dispatcherIter = server.getCommandManager().getDispatcherList().iterator();
+
+        try {
+            while (dispatcherIter.hasNext() && executionCount < 1) {
+                executionCount = dispatcherIter.next().execute(reader, source);
+            }
+        } catch (CommandRuntimeException commandEx) {
+            source.sendFailure(commandEx.getComponent());
+        } catch (CommandSyntaxException e) {
+            e.printStackTrace();
+        }
+
+        if (executionCount > 0) info.cancel();
     }
     
 }

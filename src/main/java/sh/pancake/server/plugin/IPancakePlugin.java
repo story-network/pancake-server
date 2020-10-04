@@ -11,7 +11,8 @@ import sh.pancake.server.IPancakeExtra;
 public interface IPancakePlugin extends IPancakeExtra {
 
     /*
-     * Called right after initialized
+     *
+     * Called right after initialized.
      * 
      * Plugin should store PluginData or you will never get it again!!
      * 

@@ -9,29 +9,30 @@ package sh.pancake.server;
 public interface IPancakeExtra {
     
     /*
-     * Invoked after loaded
+     * Invoked right after loaded.
      */
     default void onLoad() {
 
     }
 
     /*
-     * Invoked before get unloaded
+     * Invoked before get unloaded.
      */
     default void onUnload() {
 
     }
 
     /*
-     * Invoked after server initialized
+     * Invoked after server initialized.
+     * Register commands here.
      */
     default void onServerPreInit() {
 
     }
 
     /*
-     * Invoked after server successfully started
-     * It called after a log like "Done (6.755s)!"
+     * Invoked after server successfully started.
+     * It called after a log like "Done (6.755s)!".
      */
     default void onServerPostInit() {
 

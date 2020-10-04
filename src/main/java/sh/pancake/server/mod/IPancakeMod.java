@@ -11,7 +11,8 @@ import sh.pancake.server.IPancakeExtra;
 public interface IPancakeMod extends IPancakeExtra {
 
     /*
-     * Called right after initialized
+     *
+     * Called right after initialized.
      * 
      * Mod should store ModData or you will never get it again!!
      * 

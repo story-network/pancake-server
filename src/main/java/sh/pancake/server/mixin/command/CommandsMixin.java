@@ -45,8 +45,7 @@ public abstract class CommandsMixin {
         server.getCommandManager().onMCCommandInit(dispatcher);
     }
 
-    @Inject(method = "sendCommands", at = @At("RETURN"))
-    public void onSendCommands(ServerPlayer player, CallbackInfo info) {
+    public void sendCommands(ServerPlayer player) {
         PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
 
         List<CommandDispatcher<CommandSourceStack>> list = server.getCommandManager().getDispatcherList();
@@ -55,6 +54,9 @@ public abstract class CommandsMixin {
         Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> redirectMap = new HashMap<>();
 
         RootCommandNode<SharedSuggestionProvider> rootSuggestion = new RootCommandNode<>();
+
+        redirectMap.put(dispatcher.getRoot(), new RootCommandNode<>());
+        fillUsableCommands(dispatcher.getRoot(), rootSuggestion, player.createCommandSourceStack(), redirectMap);
 
         while (iter.hasNext()) {
             fillUsableCommands(iter.next().getRoot(), rootSuggestion, player.createCommandSourceStack(), redirectMap);
