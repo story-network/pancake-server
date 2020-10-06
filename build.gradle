@@ -4,6 +4,8 @@
  * Copyright (c) storycraft. Licensed under the MIT Licence.
  */
 
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 buildscript {
     repositories {
         maven {
@@ -35,6 +37,8 @@ version '1.0.0'
 
 sourceCompatibility = 1.9
 targetCompatibility = 1.9
+
+jar.enabled = false
 
 compileJava.options.encoding = 'UTF-8'
 
@@ -113,41 +117,84 @@ dependencies {
 
 }
 
-shadowJar {
-
-    configurations = [project.configurations.embed]
-
-}
-
-// Copy target_version so PancakeServer can identify it
-task createTargetVersion()  {
-    doLast {
-        new File("build/resources/main", "target_version").text = minecraft.version
-    }
-}
-compileJava.dependsOn createTargetVersion
-
-jar {
-
-    finalizedBy shadowJar
-
-    manifest {
-        attributes 'Created-By': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')'
-        attributes 'Main-Class': 'sh.pancake.main.Main'
-    }
-}
-
 sourceSets {
-    main {
+
+    launcher {
+
         java {
-            srcDir 'src/main/java'
+            srcDir 'src/launcher/java'
         }
 
         resources {
-            srcDir 'src/main/resources'
+            srcDir 'src/launcher/resources'
         }
 
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
     }
+
+    server {
+
+        java {
+            srcDir 'src/server/java'
+        }
+
+        resources {
+            srcDir 'src/server/resources'
+        }
+
+        compileClasspath += sourceSets.launcher.output
+        runtimeClasspath += sourceSets.launcher.output
+
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+
+    }
+
+}
+
+task createServerJar(type: Jar) {
+    doFirst {
+        // Copy target_version so Launcher can identify it
+        new File("build/resources/server", "target_version").text = minecraft.version
+    }
+
+    from sourceSets.server.output
+
+    archiveAppendix = 'server'
+}
+
+task createLauncherJar(type: ShadowJar) {
+    // Link server jar
+    new File("build/resources/launcher", "target_server").text = "${rootProject.name}-server-${version}.jar"
+
+    from sourceSets.launcher.output
+
+    archiveAppendix = 'launcher'
+
+    configurations = [project.configurations.embed]
+
+    // Exclude lib signatures
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+
+    manifest {
+        attributes 'Created-From': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')'
+        attributes 'Main-Class': 'sh.pancake.launcher.main.Main'
+    }
+}
+
+task createLibJar(type: ShadowJar) {
+
+    from createLauncherJar
+    from createServerJar
+
+}
+
+artifacts {
+
+    archives createServerJar
+    archives createLauncherJar
+
 }
 
 publishing {
@@ -159,9 +206,12 @@ publishing {
     }
 
     publications {
-        mavenJava(MavenPublication) {
+
+        mavenAllLib(MavenPublication) {
             artifactId = 'pancake-server'
-            from components.java
+
+            artifact createLibJar
         }
+
     }
 }
