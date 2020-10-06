@@ -9,19 +9,27 @@ package sh.pancake.server.command;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.WeakHashMap;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.synchronization.SuggestionProviders;
 import sh.pancake.common.util.AsyncTask;
 import sh.pancake.server.IPancakeExtra;
 
@@ -30,9 +38,9 @@ public class CommandManager {
     private static final Logger LOGGER = LogManager.getLogger("CommandManager");
 
     // Separate by IPancakeExtra so commands can unload when they are unloaded
-    private WeakHashMap<IPancakeExtra, CommandDispatcher<CommandSourceStack>> extraMap;
+    private WeakHashMap<IPancakeExtra, CommandDispatcher<ICommandStack>> extraMap;
 
-    private CommandDispatcher<CommandSourceStack> serverDispatcher;
+    private CommandDispatcher<ICommandStack> serverDispatcher;
 
     public CommandManager() {
         this.extraMap = new WeakHashMap<>();
@@ -40,20 +48,20 @@ public class CommandManager {
         this.serverDispatcher = new CommandDispatcher<>();
     }
 
-    public CommandDispatcher<CommandSourceStack> getServerDispatcher() {
+    public CommandDispatcher<ICommandStack> getServerDispatcher() {
         return serverDispatcher;
     }
 
-    public CommandDispatcher<CommandSourceStack> getDispatcherFor(IPancakeExtra extra) {
-        return extraMap.computeIfAbsent(extra, (ex) -> new CommandDispatcher<CommandSourceStack>());
+    public CommandDispatcher<ICommandStack> getDispatcherFor(IPancakeExtra extra) {
+        return extraMap.computeIfAbsent(extra, (ex) -> new CommandDispatcher<ICommandStack>());
     }
 
     public void onMCCommandInit(CommandDispatcher<CommandSourceStack> mcDispatcher) {
         LOGGER.info("Initializing commands for " + mcDispatcher);
     }
 
-    public List<CommandDispatcher<CommandSourceStack>> getDispatcherList() {
-        List<CommandDispatcher<CommandSourceStack>> list = new ArrayList<>();
+    public List<CommandDispatcher<ICommandStack>> getDispatcherList() {
+        List<CommandDispatcher<ICommandStack>> list = new ArrayList<>();
 
         list.add(serverDispatcher);
 
@@ -62,10 +70,10 @@ public class CommandManager {
         return list;
     }
 
-    public int performCommand(StringReader reader, CommandSourceStack stack) throws CommandSyntaxException, CommandRuntimeException {
+    public int performCommand(StringReader reader, ICommandStack stack) throws CommandSyntaxException, CommandRuntimeException {
         int executionCount = 0;
 
-        Iterator<CommandDispatcher<CommandSourceStack>> dispatcherIter = getDispatcherList().iterator();
+        Iterator<CommandDispatcher<ICommandStack>> dispatcherIter = getDispatcherList().iterator();
 
         CommandSyntaxException commandEx = null;
         CommandRuntimeException commandRuntimeEx = null;
@@ -89,21 +97,65 @@ public class CommandManager {
         return executionCount;
     }
 
-    public AsyncTask<Suggestions[]> createSuggestionsListAsync(CommandSourceStack stack, StringReader reader) {
-        List<CommandDispatcher<CommandSourceStack>> dispatcherList = getDispatcherList();
-        Iterator<CommandDispatcher<CommandSourceStack>> iter = dispatcherList.iterator();
+    public AsyncTask<Suggestions[]> createSuggestionsListAsync(ICommandStack stack, StringReader reader) {
+        List<CommandDispatcher<ICommandStack>> dispatcherList = getDispatcherList();
+        Iterator<CommandDispatcher<ICommandStack>> iter = dispatcherList.iterator();
 
         List<AsyncTask<Suggestions>> taskList = new ArrayList<>(dispatcherList.size());
         while (iter.hasNext()) {
-            CommandDispatcher<CommandSourceStack> dispatcher = iter.next();
+            CommandDispatcher<ICommandStack> dispatcher = iter.next();
 
-            ParseResults<CommandSourceStack> res = dispatcher.parse(reader, stack);
+            ParseResults<ICommandStack> res = dispatcher.parse(reader, stack);
 
             taskList.add(new AsyncTask<Suggestions>(dispatcher.getCompletionSuggestions(res)::join));
         }
 
         return (AsyncTask<Suggestions[]>) AsyncTask.all(taskList.toArray(new AsyncTask[0]));
 
+    }
+
+    public void fillUsableCommandList(CommandNode<SharedSuggestionProvider> suggestion, ICommandStack stack, Map<CommandNode<ICommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap) {
+        List<CommandDispatcher<ICommandStack>> list = getDispatcherList();
+        Iterator<CommandDispatcher<ICommandStack>> iter = list.iterator();
+
+        while (iter.hasNext()) {
+            CommandDispatcher<ICommandStack> dispatcher = iter.next();
+            CommandNode<ICommandStack> node = dispatcher.getRoot();
+
+            redirectMap.put(node, new RootCommandNode<>());
+
+            fillUsableCommand(node, suggestion, stack, redirectMap);
+        }
+    }
+
+    public void fillUsableCommand(CommandNode<ICommandStack> root, CommandNode<SharedSuggestionProvider> suggestion, ICommandStack stack, Map<CommandNode<ICommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap) {
+        Iterator<CommandNode<ICommandStack>> iter = root.getChildren().iterator();
+
+        while (iter.hasNext()) {
+            CommandNode<ICommandStack> node = iter.next();
+
+            if (!node.canUse(stack)) continue;
+
+            ArgumentBuilder<SharedSuggestionProvider, ?> builder = (ArgumentBuilder<SharedSuggestionProvider, ?>) (ArgumentBuilder<?, ?>) node.createBuilder();
+            builder.requires((s) -> true);
+            if (builder.getCommand() != null) builder.executes((s) -> 0);
+
+            if (builder instanceof RequiredArgumentBuilder) {
+                RequiredArgumentBuilder<SharedSuggestionProvider, ?> requiredBuilder = (RequiredArgumentBuilder<SharedSuggestionProvider, ?>) builder;
+                if (requiredBuilder.getSuggestionsProvider() != null) {
+                    requiredBuilder.suggests(SuggestionProviders.safelySwap((SuggestionProvider<SharedSuggestionProvider>) requiredBuilder.getSuggestionsProvider()));
+                }
+             }
+ 
+             if (builder.getRedirect() != null) {
+                builder.redirect(redirectMap.get(builder.getRedirect()));
+             }
+ 
+             CommandNode<SharedSuggestionProvider> suggestionNode = builder.build();
+             redirectMap.put(node, suggestionNode);
+             suggestion.addChild(suggestionNode);
+             if (!node.getChildren().isEmpty()) fillUsableCommand(node, suggestionNode, stack, redirectMap);
+        }
     }
 
 }

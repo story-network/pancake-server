@@ -32,6 +32,8 @@ import net.minecraft.network.protocol.game.ClientboundCommandsPacket;
 import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.launcher.PancakeLauncher;
 import sh.pancake.server.PancakeServer;
+import sh.pancake.server.command.CommandStack;
+import sh.pancake.server.command.ICommandStack;
 
 @Mixin(Commands.class)
 public abstract class CommandsMixin {
@@ -40,9 +42,7 @@ public abstract class CommandsMixin {
     private CommandDispatcher<CommandSourceStack> dispatcher;
 
     @Shadow
-    abstract void fillUsableCommands(CommandNode<CommandSourceStack> root,
-            CommandNode<SharedSuggestionProvider> suggestion, CommandSourceStack stack,
-            Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> redirectMap);
+    abstract void fillUsableCommands(CommandNode<CommandSourceStack> root, CommandNode<SharedSuggestionProvider> suggestion, CommandSourceStack stack, Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> redirectMap);
 
     @Inject(method = "<init>*", at = @At("RETURN"))
     void onConstructor(CallbackInfo info) {
@@ -59,20 +59,17 @@ public abstract class CommandsMixin {
         PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
 
         CommandSourceStack source = player.createCommandSourceStack();
+        ICommandStack stack = new CommandStack(server, source);
 
-        List<CommandDispatcher<CommandSourceStack>> list = server.getCommandManager().getDispatcherList();
-        Iterator<CommandDispatcher<CommandSourceStack>> iter = list.iterator();
-
-        Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> redirectMap = new HashMap<>();
+        Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> mcRedirectMap = new HashMap<>();
+        Map<CommandNode<ICommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap = new HashMap<>();
 
         RootCommandNode<SharedSuggestionProvider> rootSuggestion = new RootCommandNode<>();
 
-        redirectMap.put(dispatcher.getRoot(), new RootCommandNode<>());
-        fillUsableCommands(dispatcher.getRoot(), rootSuggestion, source, redirectMap);
+        mcRedirectMap.put(dispatcher.getRoot(), new RootCommandNode<>());
+        fillUsableCommands(dispatcher.getRoot(), rootSuggestion, source, mcRedirectMap);
 
-        while (iter.hasNext()) {
-            fillUsableCommands(iter.next().getRoot(), rootSuggestion, source, redirectMap);
-        }
+        server.getCommandManager().fillUsableCommandList(rootSuggestion, stack, redirectMap);
 
         player.connection.send(new ClientboundCommandsPacket(rootSuggestion));
     }
@@ -82,12 +79,14 @@ public abstract class CommandsMixin {
         CommandSourceStack source = (CommandSourceStack) obj;
         PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
 
+        ICommandStack stack = new CommandStack(server, source);
+
         int executionCount = 0;
 
         boolean hasCommand = false;
 
         try {
-            executionCount += server.getCommandManager().performCommand(reader, source);
+            executionCount += server.getCommandManager().performCommand(reader, stack);
             hasCommand = true;
         } catch (CommandRuntimeException runtimeEx) {
             

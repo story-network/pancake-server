@@ -31,6 +31,8 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import sh.pancake.common.util.AsyncTask;
 import sh.pancake.launcher.PancakeLauncher;
 import sh.pancake.server.PancakeServer;
+import sh.pancake.server.command.CommandStack;
+import sh.pancake.server.command.ICommandStack;
 
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImplMixin {
@@ -58,8 +60,9 @@ public abstract class ServerGamePacketListenerImplMixin {
         if (reader.canRead() && reader.peek() == '/') reader.skip();
 
         CommandSourceStack source = player.createCommandSourceStack();
+        ICommandStack stack = new CommandStack(pancakeServer, source);
 
-        AsyncTask<Suggestions[]> suggestionsTask = pancakeServer.getCommandManager().createSuggestionsListAsync(source, reader);
+        AsyncTask<Suggestions[]> suggestionsTask = pancakeServer.getCommandManager().createSuggestionsListAsync(stack, reader);
 
         suggestionsTask.then((suggestionsList) -> {
             if (suggestionsList.length < 1) return;
