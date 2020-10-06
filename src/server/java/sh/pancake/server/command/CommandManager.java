@@ -32,27 +32,37 @@ public class CommandManager {
     // Separate by IPancakeExtra so commands can unload when they are unloaded
     private WeakHashMap<IPancakeExtra, CommandDispatcher<CommandSourceStack>> extraMap;
 
+    private CommandDispatcher<CommandSourceStack> serverDispatcher;
+
     public CommandManager() {
         this.extraMap = new WeakHashMap<>();
+
+        this.serverDispatcher = new CommandDispatcher<>();
+    }
+
+    public CommandDispatcher<CommandSourceStack> getServerDispatcher() {
+        return serverDispatcher;
     }
 
     public CommandDispatcher<CommandSourceStack> getDispatcherFor(IPancakeExtra extra) {
         return extraMap.computeIfAbsent(extra, (ex) -> new CommandDispatcher<CommandSourceStack>());
     }
 
-    public void onMCCommandInit(CommandDispatcher<CommandSourceStack> serverDispatcher) {
-        LOGGER.info("Initializing commands for " + serverDispatcher);
+    public void onMCCommandInit(CommandDispatcher<CommandSourceStack> mcDispatcher) {
+        LOGGER.info("Initializing commands for " + mcDispatcher);
     }
 
     public List<CommandDispatcher<CommandSourceStack>> getDispatcherList() {
         List<CommandDispatcher<CommandSourceStack>> list = new ArrayList<>();
+
+        list.add(serverDispatcher);
 
         list.addAll(extraMap.values());
 
         return list;
     }
 
-    public int performCommand(StringReader reader, CommandSourceStack source) throws CommandSyntaxException, CommandRuntimeException {
+    public int performCommand(StringReader reader, CommandSourceStack stack) throws CommandSyntaxException, CommandRuntimeException {
         int executionCount = 0;
 
         Iterator<CommandDispatcher<CommandSourceStack>> dispatcherIter = getDispatcherList().iterator();
@@ -64,7 +74,7 @@ public class CommandManager {
 
         while (dispatcherIter.hasNext() && executionCount < 1) {
             try {
-                executionCount = dispatcherIter.next().execute(reader, source);
+                executionCount = dispatcherIter.next().execute(reader, stack);
                 hasCommand = true;
             } catch (CommandRuntimeException runtimeEx) {
                 commandRuntimeEx = runtimeEx;
@@ -79,7 +89,7 @@ public class CommandManager {
         return executionCount;
     }
 
-    public AsyncTask<Suggestions[]> createSuggestionsListAsync(CommandSourceStack source, StringReader reader) {
+    public AsyncTask<Suggestions[]> createSuggestionsListAsync(CommandSourceStack stack, StringReader reader) {
         List<CommandDispatcher<CommandSourceStack>> dispatcherList = getDispatcherList();
         Iterator<CommandDispatcher<CommandSourceStack>> iter = dispatcherList.iterator();
 
@@ -87,7 +97,7 @@ public class CommandManager {
         while (iter.hasNext()) {
             CommandDispatcher<CommandSourceStack> dispatcher = iter.next();
 
-            ParseResults<CommandSourceStack> res = dispatcher.parse(reader, source);
+            ParseResults<CommandSourceStack> res = dispatcher.parse(reader, stack);
 
             taskList.add(new AsyncTask<Suggestions>(dispatcher.getCompletionSuggestions(res)::join));
         }
