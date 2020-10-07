@@ -5,7 +5,6 @@
     "compatibilityLevel": "JAVA_9",
     "server": [
       "command.CommandsMixin",
-      "command.ServerGamePacketListenerImplMixin",
       "network.PacketEncoderMixin",
       "network.PacketDecoderMixin",
       "DedicatedServerMixin",
