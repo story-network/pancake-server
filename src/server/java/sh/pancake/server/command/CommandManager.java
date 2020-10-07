@@ -28,6 +28,8 @@ public class CommandManager<T> implements IDispatcherSupplier<ICommandStack> {
 
     private CommandDispatcher<ICommandStack> serverDispatcher;
 
+    private NestedCommandDispatcher mcDispatcher;
+
     public CommandManager() {
         this.extraMap = new WeakHashMap<>();
 
@@ -38,12 +40,18 @@ public class CommandManager<T> implements IDispatcherSupplier<ICommandStack> {
         return serverDispatcher;
     }
 
+    public NestedCommandDispatcher getMinecraftDispatcher() {
+        return mcDispatcher;
+    }
+
     public CommandDispatcher<ICommandStack> getDispatcherFor(T extra) {
         return extraMap.computeIfAbsent(extra, (ex) -> new CommandDispatcher<ICommandStack>());
     }
 
     public void onMCCommandInit(CommandDispatcher<CommandSourceStack> mcDispatcher) {
         LOGGER.info("Initializing commands for " + mcDispatcher);
+
+        this.mcDispatcher = (NestedCommandDispatcher) mcDispatcher;
     }
 
     public List<CommandDispatcher<ICommandStack>> getDispatcherList() {
