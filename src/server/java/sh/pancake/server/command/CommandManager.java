@@ -121,7 +121,7 @@ public class CommandManager<T> {
             CommandDispatcher<ICommandStack> dispatcher = iter.next();
             CommandNode<ICommandStack> node = dispatcher.getRoot();
 
-            redirectMap.put(node, new RootCommandNode<>());
+            redirectMap.put(node, suggestion);
 
             fillUsableCommand(node, suggestion, stack, redirectMap);
         }

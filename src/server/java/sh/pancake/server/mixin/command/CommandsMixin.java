@@ -64,7 +64,7 @@ public abstract class CommandsMixin {
 
         RootCommandNode<SharedSuggestionProvider> rootSuggestion = new RootCommandNode<>();
 
-        mcRedirectMap.put(dispatcher.getRoot(), new RootCommandNode<>());
+        mcRedirectMap.put(dispatcher.getRoot(), rootSuggestion);
         fillUsableCommands(dispatcher.getRoot(), rootSuggestion, source, mcRedirectMap);
 
         server.getCommandManager().fillUsableCommandList(rootSuggestion, stack, redirectMap);
