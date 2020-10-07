@@ -26,7 +26,7 @@ public abstract class PacketEncoderMixin {
     @Shadow
     private PacketFlow flow;
     
-    @Inject(method = "encode", at = @At("HEAD"))
+    @Inject(method = "encode", at = @At("HEAD"), cancellable = true)
     public void onEncode(ChannelHandlerContext ctx, Packet<?> packet, ByteBuf buf, CallbackInfo info) throws Exception {
         // Here we will impl our encoder
         info.cancel();

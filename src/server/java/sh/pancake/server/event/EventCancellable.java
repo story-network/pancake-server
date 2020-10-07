@@ -10,6 +10,10 @@ public class EventCancellable implements IEventCancellable {
     
     private boolean cancelled;
 
+    public EventCancellable() {
+        this.cancelled = false;
+    }
+
     @Override
     public boolean isCancelled() {
         return cancelled;
