@@ -48,9 +48,9 @@ public class PancakeServer implements IPancakeServer {
     private ModManager modManager;
     private PluginManager pluginManager;
 
-    private CommandManager commandManager;
+    private CommandManager<IPancakeExtra> commandManager;
 
-    private EventManager eventManager;
+    private EventManager<IPancakeExtra> eventManager;
 
     private DedicatedServer minecraftServer;
     private ServerStartStatus startStatus;
@@ -76,7 +76,7 @@ public class PancakeServer implements IPancakeServer {
         return startTime;
     }
 
-    public EventManager getEventManager() {
+    public EventManager<IPancakeExtra> getEventManager() {
         return eventManager;
     }
 
@@ -88,7 +88,7 @@ public class PancakeServer implements IPancakeServer {
         return pluginManager;
     }
 
-    public CommandManager getCommandManager() {
+    public CommandManager<IPancakeExtra> getCommandManager() {
         return commandManager;
     }
 
@@ -125,9 +125,9 @@ public class PancakeServer implements IPancakeServer {
 
         this.startStatus = ServerStartStatus.NOT_STARTED;
 
-        this.commandManager = new CommandManager();
+        this.commandManager = new CommandManager<>();
 
-        this.eventManager = new EventManager();
+        this.eventManager = new EventManager<>();
 
         this.modManager = new ModManager(this, Constants.MOD_DIRECTORY);
         this.pluginManager = new PluginManager(this, Constants.PLUGIN_DIRECTORY, extraClassLoaderProvider);

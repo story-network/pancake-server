@@ -31,14 +31,13 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import sh.pancake.common.util.AsyncTask;
-import sh.pancake.server.IPancakeExtra;
 
-public class CommandManager {
+public class CommandManager<T> {
 
     private static final Logger LOGGER = LogManager.getLogger("CommandManager");
 
-    // Separate by IPancakeExtra so commands can unload when they are unloaded
-    private WeakHashMap<IPancakeExtra, CommandDispatcher<ICommandStack>> extraMap;
+    // Separate by T so commands can unload when they are unloaded
+    private WeakHashMap<T, CommandDispatcher<ICommandStack>> extraMap;
 
     private CommandDispatcher<ICommandStack> serverDispatcher;
 
@@ -52,7 +51,7 @@ public class CommandManager {
         return serverDispatcher;
     }
 
-    public CommandDispatcher<ICommandStack> getDispatcherFor(IPancakeExtra extra) {
+    public CommandDispatcher<ICommandStack> getDispatcherFor(T extra) {
         return extraMap.computeIfAbsent(extra, (ex) -> new CommandDispatcher<ICommandStack>());
     }
 
@@ -110,8 +109,7 @@ public class CommandManager {
             taskList.add(new AsyncTask<Suggestions>(dispatcher.getCompletionSuggestions(res)::join));
         }
 
-        return (AsyncTask<Suggestions[]>) AsyncTask.all(taskList.toArray(new AsyncTask[0]));
-
+        return AsyncTask.all(taskList.toArray(new AsyncTask[0]));
     }
 
     public void fillUsableCommandList(CommandNode<SharedSuggestionProvider> suggestion, ICommandStack stack, Map<CommandNode<ICommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap) {
