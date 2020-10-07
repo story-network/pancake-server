@@ -12,7 +12,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.server.event.EventCancellable;
 
-public class AsyncPacketEvent extends EventCancellable {
+public abstract class AsyncPacketEvent extends EventCancellable {
 
     private Packet<?> packet;
     private ServerPlayer sender;
