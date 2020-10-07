@@ -156,7 +156,7 @@ sourceSets {
 task createServerJar(type: Jar) {
     doFirst {
         // Copy target_version so Launcher can identify it
-        new File("build/resources/server", "target_version").text = minecraft.version
+        new File("${buildDir}/resources/server", "target_version").text = minecraft.version
     }
 
     from sourceSets.server.output
@@ -166,7 +166,7 @@ task createServerJar(type: Jar) {
 
 task createLauncherJar(type: ShadowJar) {
     // Link server jar
-    new File("build/resources/launcher", "target_server").text = "${rootProject.name}-server-${version}.jar"
+    new File("${buildDir}/resources/launcher", "target_server").text = "${rootProject.name}-server-${version}.jar"
 
     from sourceSets.launcher.output
 
