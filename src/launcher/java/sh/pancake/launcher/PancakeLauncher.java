@@ -102,7 +102,7 @@ public class PancakeLauncher {
         return launched;
     }
 
-    public Object getServer() {
+    public IPancakeServer getServer() {
         return server;
     }
 

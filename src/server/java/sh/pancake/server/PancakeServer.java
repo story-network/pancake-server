@@ -25,6 +25,7 @@ import sh.pancake.launcher.classloader.ServerClassLoader;
 import sh.pancake.server.command.CommandManager;
 import sh.pancake.server.event.EventManager;
 import sh.pancake.server.mod.ModManager;
+import sh.pancake.server.network.NetworkManager;
 import sh.pancake.server.plugin.PluginManager;
 
 public class PancakeServer implements IPancakeServer {
@@ -45,6 +46,8 @@ public class PancakeServer implements IPancakeServer {
 
     private ServerClassLoader serverClassLoader;
 
+    private NetworkManager networkManager;
+
     private ModManager modManager;
     private PluginManager pluginManager;
 
@@ -57,6 +60,8 @@ public class PancakeServer implements IPancakeServer {
 
     public PancakeServer() {
         this.startTime = -1;
+
+        this.networkManager = null;
 
         this.modManager = null;
         this.pluginManager = null;
@@ -74,6 +79,10 @@ public class PancakeServer implements IPancakeServer {
 
     public long getStartTime() {
         return startTime;
+    }
+
+    public NetworkManager getNetworkManager() {
+        return networkManager;
     }
 
     public EventManager<IPancakeExtra> getEventManager() {
@@ -124,6 +133,8 @@ public class PancakeServer implements IPancakeServer {
         LOGGER.info("Applying server arguments [ " + String.join(", ", args) + " ]");
 
         this.startStatus = ServerStartStatus.NOT_STARTED;
+
+        this.networkManager = new NetworkManager(this);
 
         this.commandManager = new CommandManager<>();
 
@@ -206,7 +217,15 @@ public class PancakeServer implements IPancakeServer {
         LOGGER.info("MinecraftServer initialized. Performing pre init...");
 
         modManager.forEach((modData) -> modData.getMod().onServerPreInit());
-        pluginManager.forEach((pluginData) -> pluginData.getPlugin().onServerPreInit());
+        pluginManager.forEach((pluginData) -> {
+            try {
+                pluginData.getPlugin().onServerPreInit();
+            } catch (Throwable throwable) {
+                LOGGER.error("Error while performing preinit to " + pluginData.getInfo().getId());
+                throwable.printStackTrace();
+            }
+            
+        });
     }
 
 	public void onPostMCServerInit(DedicatedServer dedicatedServer) {
@@ -217,7 +236,15 @@ public class PancakeServer implements IPancakeServer {
         LOGGER.info("Performing post init...");
 
         modManager.forEach((modData) -> modData.getMod().onServerPostInit());
-        pluginManager.forEach((pluginData) -> pluginData.getPlugin().onServerPostInit());
+        pluginManager.forEach((pluginData) -> {
+            try {
+                pluginData.getPlugin().onServerPostInit();
+            } catch (Throwable throwable) {
+                LOGGER.error("Error while performing postinit to " + pluginData.getInfo().getId());
+                throwable.printStackTrace();
+            }
+            
+        });
 
         this.startStatus = ServerStartStatus.STARTED;
         LOGGER.info("MinecraftServer started!! Took " + ((System.currentTimeMillis() - startTime) / 1000f) + "s");

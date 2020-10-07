@@ -6,7 +6,10 @@
     "server": [
       "command.CommandsMixin",
       "command.ServerGamePacketListenerImplMixin",
+      "network.PacketEncoderMixin",
+      "network.PacketDecoderMixin",
       "DedicatedServerMixin",
+      "MinecraftServerMixin"
     ],
     "injectors": {
       "defaultRequire": 1
