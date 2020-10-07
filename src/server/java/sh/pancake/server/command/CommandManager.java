@@ -30,6 +30,7 @@ import net.minecraft.commands.CommandRuntimeException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
+import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.common.util.AsyncTask;
 
 public class CommandManager<T> {
@@ -155,5 +156,9 @@ public class CommandManager<T> {
              if (!node.getChildren().isEmpty()) fillUsableCommand(node, suggestionNode, stack, redirectMap);
         }
     }
+
+	public void sendAllCommandList(ServerPlayer player) {
+        player.getServer().getCommands().sendCommands(player);
+	}
 
 }
