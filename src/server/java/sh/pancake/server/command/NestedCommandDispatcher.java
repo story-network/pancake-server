@@ -65,6 +65,7 @@ public class NestedCommandDispatcher extends CommandDispatcher<CommandSourceStac
         Iterator<CommandDispatcher<ICommandStack>> iter = dispatcherSupplier.getIterator();
 
         StringReader extraReader = new StringReader(parse.getReader().getString());
+        if (extraReader.canRead() && extraReader.peek() == '/') extraReader.skip();
 
         while(iter.hasNext()) {
             CommandDispatcher<ICommandStack> dispatcher = iter.next();
