@@ -6,13 +6,16 @@
 
 package sh.pancake.server.impl.event.status;
 
+import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.status.ServerStatus;
 
 public class ServerStatusEvent extends StatusEvent {
 
     private ServerStatus status;
 
-    public ServerStatusEvent(ServerStatus status) {
+    public ServerStatusEvent(Connection connection, ServerStatus status) {
+        super(connection);
+        
         this.status = status;
     }
 

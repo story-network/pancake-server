@@ -11,7 +11,7 @@ import net.minecraft.network.protocol.Packet;
 
 // Define custom packet that can be serialized into certain type of packet
 public interface ICustomPacket<T extends PacketListener> extends Packet<T> {
-    
+
     // Return empty packet object for type
     Packet<?> getTargetPacket();
 
