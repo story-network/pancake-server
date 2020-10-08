@@ -22,6 +22,7 @@ import net.minecraft.server.players.PlayerList;
 import sh.pancake.launcher.PancakeLauncher;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.impl.event.player.PlayerChatEvent;
+import sh.pancake.server.impl.event.player.PlayerPreCommandEvent;
 import sh.pancake.server.impl.event.player.PlayerVehicleInputEvent;
 
 @Mixin(ServerGamePacketListenerImpl.class)
@@ -48,6 +49,22 @@ public abstract class ServerGamePacketListenerImplMixin {
         player.setPlayerInput(event.getXxa(), event.getZza(), event.isJumping(), event.isSneaking());
     }
 
+    @Shadow
+    private void handleCommand(String command) {}
+
+    @Redirect(method = "handleChat", at = @At(value = "INVOKE", target = "net/minecraft/server/network/ServerGamePacketListenerImpl.handleCommand(Ljava/lang/String;)V"))
+    public void onPlayerCommandChat(ServerGamePacketListenerImpl impl, String command) {
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        PlayerPreCommandEvent event = new PlayerPreCommandEvent(player, command);
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        if (event.isCancelled()) return;
+
+        handleCommand(event.getCommand());
+    }
+
     @Redirect(method = "handleChat", at = @At(value = "INVOKE", target = "net/minecraft/server/players/PlayerList.broadcastMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/ChatType;Ljava/util/UUID;)V"))
     public void onPlayerChat(PlayerList playerList, Component component, ChatType type, UUID uuid) {
         PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
@@ -56,11 +73,8 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         pancakeServer.getEventManager().callEvent(event);
 
-        if (event.isCancelled()) {
-            return;
-        }
+        if (event.isCancelled()) return;
 
         server.getPlayerList().broadcastMessage(event.getComponent(), event.getChatType(), event.getSenderUUID());
     }
-
 }

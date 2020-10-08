@@ -8,6 +8,12 @@ package sh.pancake.server.impl.event.player;
 
 import net.minecraft.server.level.ServerPlayer;
 
+/* 
+ *
+ * This event ONLY invoked for vehicle input. Not for a riding move handling.
+ * @see PlayerRideMoveEvent for riding move event.
+ * 
+ */
 public class PlayerVehicleInputEvent extends PlayerEvent {
 
     private float xxa;
