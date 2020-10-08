@@ -75,7 +75,12 @@ public class NetworkManager {
         server.getEventManager().callEvent(outEvent);
         if (outEvent.isCancelled()) return;
 
-        Integer packetId = protocol.getPacketId(flow, packet);
+        Integer packetId;
+        if (packet instanceof ICustomPacket) {
+            packetId = protocol.getPacketId(flow, ((ICustomPacket<?>) packet).getTargetPacket());
+        } else {
+            packetId = protocol.getPacketId(flow, packet);
+        }
         try {
             outEvent.getSerializer().writeTo(wrapped, packetId, packet);
         } catch (Throwable throwable) {
