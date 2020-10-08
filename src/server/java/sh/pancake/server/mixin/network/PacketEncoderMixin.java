@@ -28,6 +28,8 @@ public abstract class PacketEncoderMixin {
     
     @Inject(method = "encode", at = @At("HEAD"), cancellable = true)
     public void onEncode(ChannelHandlerContext ctx, Packet<?> packet, ByteBuf buf, CallbackInfo info) throws Exception {
+        if (info.isCancelled()) return;
+        
         // Here we will impl our encoder
         info.cancel();
 

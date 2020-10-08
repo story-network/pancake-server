@@ -43,6 +43,7 @@ public abstract class CommandsMixin {
 
     @Inject(method = "<init>*", at = @At("RETURN"))
     void onConstructor(CallbackInfo info) {
+        if (info.isCancelled()) return;
         PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
 
         server.getCommandManager().onMCCommandInit(dispatcher);
@@ -50,6 +51,7 @@ public abstract class CommandsMixin {
 
     @Inject(method = "sendCommands", at = @At("HEAD"), cancellable = true)
     public void onSendCommands(ServerPlayer player, CallbackInfo info) {
+        if (info.isCancelled()) return;
         // No we will merge every commands
         info.cancel();
         

@@ -29,6 +29,8 @@ public abstract class PacketDecoderMixin {
     
     @Inject(method = "decode", at = @At("HEAD"), cancellable = true)
     public void onDecode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> packetList, CallbackInfo info) throws Exception {
+        if (info.isCancelled()) return;
+        
         // Here we will impl our decoder
         info.cancel();
 

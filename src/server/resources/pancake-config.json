@@ -2,12 +2,15 @@
     "required": true,
     "minVersion": "0.6",
     "package": "sh.pancake.server.mixin",
+    "priority": 999999,
+    "mixinPriority": -999999,
     "compatibilityLevel": "JAVA_9",
     "server": [
       "command.CommandsMixin",
       "network.PacketEncoderMixin",
       "network.PacketDecoderMixin",
       "status.ServerStatusPacketListenerImplMixin",
+      "game.ServerGamePacketListenerImplMixin",
       "level.ExplosionMixin",
       "DedicatedServerMixin",
       "MinecraftServerMixin"

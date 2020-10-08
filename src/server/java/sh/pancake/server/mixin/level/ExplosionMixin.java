@@ -82,6 +82,8 @@ public abstract class ExplosionMixin {
     
     @Inject(method = "explode", at = @At("HEAD"), cancellable = true)
     public void onExplode(CallbackInfo info) {
+        if (info.isCancelled()) return;
+        
         PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
         
         PreExplosionEvent event = new PreExplosionEvent(level, (Explosion) (Object) this, x, y, z, radius, fire, damageSource, source, blockInteraction, damageCalculator);
@@ -109,6 +111,8 @@ public abstract class ExplosionMixin {
 
     @Inject(method = "finalizeExplosion", at = @At("HEAD"))
     public void onFinalizeExplosion(boolean showParticle, CallbackInfo info) {
+        if (info.isCancelled()) return;
+
         PancakeServer server = (PancakeServer) PancakeLauncher.getLauncher().getServer();
 
         PostExplosionEvent event = new PostExplosionEvent(level, (Explosion) (Object) this, x, y, z, radius, fire, damageSource, source, blockInteraction, toBlow, hitPlayers);
