@@ -22,7 +22,10 @@ import net.minecraft.server.players.PlayerList;
 import sh.pancake.launcher.PancakeLauncher;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.impl.event.player.PlayerChatEvent;
+import sh.pancake.server.impl.event.player.PlayerFallFlyEvent;
 import sh.pancake.server.impl.event.player.PlayerPreCommandEvent;
+import sh.pancake.server.impl.event.player.PlayerToggleCrouchEvent;
+import sh.pancake.server.impl.event.player.PlayerToggleSprintEvent;
 import sh.pancake.server.impl.event.player.PlayerVehicleInputEvent;
 
 @Mixin(ServerGamePacketListenerImpl.class)
@@ -42,9 +45,7 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         pancakeServer.getEventManager().callEvent(event);
 
-        if (event.isCancelled()) {
-            return;
-        }
+        if (event.isCancelled()) return;
 
         player.setPlayerInput(event.getXxa(), event.getZza(), event.isJumping(), event.isSneaking());
     }
@@ -77,4 +78,49 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         server.getPlayerList().broadcastMessage(event.getComponent(), event.getChatType(), event.getSenderUUID());
     }
+
+    @Redirect(method = "handlePlayerCommand", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.setSprinting(Z)V"))
+    public void onPlayerSprint(ServerPlayer player, boolean sprint) {
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        PlayerToggleSprintEvent event = new PlayerToggleSprintEvent(player, sprint);
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        if (event.isCancelled()) return;
+
+        player.setSprinting(event.shouldSprint());
+    }
+
+    @Redirect(method = "handlePlayerCommand", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.setShiftKeyDown(Z)V"))
+    public void onPlayerCrouch(ServerPlayer player, boolean sneak) {
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        PlayerToggleCrouchEvent event = new PlayerToggleCrouchEvent(player, sneak);
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        if (event.isCancelled()) return;
+
+        player.setShiftKeyDown(event.shouldCrouch());
+    }
+
+    @Redirect(method = "handlePlayerCommand", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.tryToStartFallFlying()Z"))
+    public boolean onPlayerFallFly(ServerPlayer player) {
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        PlayerFallFlyEvent event = new PlayerFallFlyEvent(player, !player.isFallFlying());
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        // Return true with nothing so it does nothing
+        if (event.isCancelled()) return true;
+
+        if (event.shouldFallFly()) return player.tryToStartFallFlying();
+
+        // Return false so it will stop fall flying
+        return false;
+    }
+
+
 }
