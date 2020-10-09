@@ -6,6 +6,8 @@
 
 package sh.pancake.server.impl.event.entity;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.world.entity.Entity;
 import sh.pancake.server.impl.event.level.LevelEvent;
 
@@ -20,6 +22,18 @@ public class EntityEvent<T extends Entity> extends LevelEvent {
 
     public T getEntity() {
         return entity;
+    }
+
+    protected void setEntity(T entity) {
+        this.entity = entity;
+    }
+
+    // Returns null when it can't be casted
+    @Nullable
+    public <S extends T>S getEntityAs(Class<S> cl) {
+        if (!cl.isInstance(entity)) return null;
+
+        return (S) entity;
     }
     
 }
