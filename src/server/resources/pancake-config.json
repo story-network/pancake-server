@@ -12,6 +12,7 @@
       "status.ServerStatusPacketListenerImplMixin",
       "game.ServerGamePacketListenerImplMixin",
       "level.ExplosionMixin",
+      "entity.FallingBlockEntityMixin",
       "DedicatedServerMixin",
       "MinecraftServerMixin"
     ],
