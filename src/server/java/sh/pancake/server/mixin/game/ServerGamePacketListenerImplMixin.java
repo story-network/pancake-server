@@ -13,15 +13,25 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockBreakAckPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.players.PlayerList;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import sh.pancake.launcher.PancakeLauncher;
 import sh.pancake.server.PancakeServer;
+import sh.pancake.server.impl.event.player.PlayerBlockActionEvent;
 import sh.pancake.server.impl.event.player.PlayerChatEvent;
+import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
 import sh.pancake.server.impl.event.player.PlayerFallFlyEvent;
 import sh.pancake.server.impl.event.player.PlayerPreCommandEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleCrouchEvent;
@@ -122,5 +132,51 @@ public abstract class ServerGamePacketListenerImplMixin {
         return false;
     }
 
+    @Redirect(method = "handlePlayerAction", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayerGameMode.handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;I)V"))
+    public void onHandleBlockBreakAction(ServerPlayerGameMode gamemode, BlockPos position, ServerboundPlayerActionPacket.Action action, Direction direction, int maxBuildHeight) {
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        PlayerBlockActionEvent event = new PlayerBlockActionEvent(player, action, position, direction, maxBuildHeight);
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            // We should notify action cancelled so client undo the action
+            player.connection.send(new ClientboundBlockBreakAckPacket(position, gamemode.level.getBlockState(position), action, false, "Cancelled"));
+            return;
+        }
+
+        gamemode.handleBlockBreakAction(event.getPosition(), event.getAction(), event.getActionDirection(), event.getMaxBuildYLimit());
+    }
+
+    @Redirect(method = "handlePlayerAction", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.drop(Z)Z"))
+    public boolean onDropItem(ServerPlayer player, boolean dropAll) {
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        PlayerDropItemEvent event = new PlayerDropItemEvent(player, dropAll, player.inventory.getSelected());
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            // Fix player inventory so they don't think they lost item
+            player.connection.send(new ClientboundContainerSetSlotPacket(-2, player.inventory.selected, player.inventory.getSelected()));
+            return false;
+        }
+
+        return player.drop(event.isDropAll());
+    }
+
+    @Redirect(method = "handleSetCreativeModeSlot", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.drop(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;"))
+    public ItemEntity onCreativeDrop(ServerPlayer player, ItemStack item, boolean dropAll) {
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        PlayerDropItemEvent event = new PlayerDropItemEvent(player, dropAll, item);
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        if (event.isCancelled()) return null;
+
+        return player.drop(event.getDropItem(), event.isDropAll());
+    }
 
 }
