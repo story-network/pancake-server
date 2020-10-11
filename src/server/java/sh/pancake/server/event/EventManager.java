@@ -7,44 +7,45 @@
 package sh.pancake.server.event;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import sh.pancake.server.ExtraBasedMap;
+import sh.pancake.server.IPancakeExtra;
+
 /*
  *
- * Handle entire event listeners
+ * Handle listeners
+ * 
+ * E = Event base class
+ * L = Listener base class
  * 
  */
-public class EventManager<T> {
+public class EventManager<E, L> {
 
     private static final Logger LOGGER = LogManager.getLogger("EventManager");
 
-    // Separate EventMap by IPancakeExtra so plugin events can unload when they are unloaded
-    private WeakHashMap<T, EventMap> extraMap;
+    private ExtraBasedMap<Class<? extends E>, EventInvoker<? extends E>> extraMap;
 
     public EventManager() {
-        this.extraMap = new WeakHashMap<>();
+        this.extraMap = new ExtraBasedMap<>();
     }
 
-    protected EventMap getEventMap(T extra) {
-        return extraMap.computeIfAbsent(extra, (ex) -> new EventMap());
+    public <R extends E>EventInvoker<R> getInvokerOf(IPancakeExtra extra, Class<R> clazz) {
+        return (EventInvoker<R>) extraMap.computeIfAbsentOf(extra, clazz, key -> new EventInvoker<R>());
     }
 
-    public <R extends IEvent>void register(T extra, Class<R> cl, IEventListenerFunc<R> func, EventPriority priority) {
-        getEventMap(extra).register(cl, func, priority);
+    public <R extends E>void register(IPancakeExtra extra, Class<R> cl, IEventListenerFunc<R> func, EventPriority priority) {
+        getInvokerOf(extra, cl).register(func, priority);
     }
 
-    public <R extends IEvent>void register(T extra, Class<R> cl, IEventListenerFunc<R> func) {
+    public <R extends E>void register(IPancakeExtra extra, Class<R> cl, IEventListenerFunc<R> func) {
         register(extra, cl, func, EventPriority.NORMAL);
     }
 
-    public void registerAll(T extra, IEventListener listener) {
+    public void registerAll(IPancakeExtra extra, L listener) {
         Method[] methodList = listener.getClass().getDeclaredMethods();
 
         for (Method method : methodList) {
@@ -64,14 +65,9 @@ public class EventManager<T> {
 
             method.setAccessible(true);
 
-            Class<?> cl = method.getParameterTypes()[0];
+            Class<? extends E> cl = (Class<? extends E>) method.getParameterTypes()[0];
 
-            if (!Arrays.asList(cl.getInterfaces()).contains(IEvent.class)) {
-                LOGGER.warn("Skipping event function " + method.getName() + " at" + listener.getClass().getName() + ", parameter should implements IEvent");
-                continue;
-            }
-
-            register(extra, (Class<? extends IEvent>) cl, (event) -> {
+            register(extra, cl, (event) -> {
                 try {
                     method.invoke(listener, event);
                 } catch (Exception e) {
@@ -81,15 +77,15 @@ public class EventManager<T> {
         }
     }
 
-    public <R extends IEvent>void unregister(T extra, Class<R> cl, IEventListenerFunc<R> func, EventPriority priority) {
-        getEventMap(extra).unregister(cl, func, priority);
+    public <R extends E>void unregister(IPancakeExtra extra, Class<R> cl, IEventListenerFunc<R> func, EventPriority priority) {
+        getInvokerOf(extra, cl).unregister(func, priority);
     }
 
-    public <R extends IEvent>void unregister(T extra, Class<R> cl, IEventListenerFunc<R> func) {
+    public <R extends E>void unregister(IPancakeExtra extra, Class<R> cl, IEventListenerFunc<R> func) {
         unregister(extra, cl, func, EventPriority.NORMAL);
     }
 
-    public void unregisterAll(T extra, IEventListener listener) {
+    public void unregisterAll(IPancakeExtra extra, L listener) {
         Method[] methodList = listener.getClass().getDeclaredMethods();
         
         for (Method method : methodList) {
@@ -101,11 +97,9 @@ public class EventManager<T> {
 
             method.setAccessible(true);
 
-            Class<?> cl = method.getParameterTypes()[0];
+            Class<? extends E> cl = (Class<? extends E>) method.getParameterTypes()[0];
 
-            if (!Arrays.asList(cl.getInterfaces()).contains(IEvent.class)) continue;
-
-            unregister(extra, (Class<? extends IEvent>) cl, (event) -> {
+            unregister(extra, cl, (event) -> {
                 try {
                     method.invoke(listener, event);
                 } catch (Exception e) {
@@ -115,41 +109,19 @@ public class EventManager<T> {
         }
     }
 
-    public void unregisterAll(T extra) {
-        extraMap.remove(extra);
+    public void unregisterAll(IPancakeExtra extra) {
+        extraMap.removeMapOf(extra);
     }
 
-    public <R extends IEvent>void callEvent(R event) {
-        Iterator<EventMap> eventMapIter = extraMap.values().iterator();
+    public <R extends E>void callEvent(R event) {
+        Iterator<IPancakeExtra> extraIter = extraMap.keySetMap().iterator();
 
-        while (eventMapIter.hasNext()) {
-            EventInvoker<R> cl = (EventInvoker<R>) eventMapIter.next().getInvokerFor(event.getClass());
+        while (extraIter.hasNext()) {
+            IPancakeExtra extra = extraIter.next();
+
+            EventInvoker<R> cl = (EventInvoker<R>) getInvokerOf(extra, (Class<? extends E>) event.getClass());
             cl.invoke(event);
         }
-    }
-
-    protected class EventMap {
-        
-        private Map<Class<?>, EventInvoker<?>> eventMap;
-
-        public EventMap() {
-            this.eventMap = new ConcurrentHashMap<>();
-        }
-
-        public <R extends IEvent>EventInvoker<R> getInvokerFor(Class<? extends R> clazz) {
-            return (EventInvoker<R>) eventMap.computeIfAbsent(clazz, key -> new EventInvoker<R>());
-        }
-
-        public <R extends IEvent>void register(Class<R> cl, IEventListenerFunc<R> func, EventPriority priority) {
-            EventInvoker<R> invoker = getInvokerFor(cl);
-            invoker.register(func, priority);
-        }
-
-        public <R extends IEvent>void unregister(Class<R> cl, IEventListenerFunc<R> func, EventPriority priority) {
-            EventInvoker<R> invoker = getInvokerFor(cl);
-            invoker.unregister(func, priority);
-        }
-
     }
 
 }

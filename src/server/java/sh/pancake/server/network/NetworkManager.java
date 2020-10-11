@@ -7,7 +7,11 @@
 package sh.pancake.server.network;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.WeakHashMap;
 
 import javax.annotation.Nullable;
@@ -28,9 +32,10 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.protocol.login.ServerboundHelloPacket;
+import sh.pancake.server.IPancakeExtra;
 import sh.pancake.server.PancakeServer;
-import sh.pancake.server.impl.event.network.AsyncPacketInEvent;
-import sh.pancake.server.impl.event.network.AsyncPacketOutEvent;
+import sh.pancake.server.impl.network.DefaultPacketSerializer;
+import sh.pancake.server.impl.network.IPacketSerializer;
 
 public class NetworkManager {
 
@@ -40,9 +45,13 @@ public class NetworkManager {
 
     private WeakHashMap<Channel, GameProfile> channelMap;
 
+    private ExtraPacketHandlerMap handlerMap;
+
     public NetworkManager(PancakeServer server) {
         this.server = server;
         this.channelMap = new WeakHashMap<>();
+
+        this.handlerMap = new ExtraPacketHandlerMap();
     }
 
     public PancakeServer getServer() {
@@ -63,6 +72,73 @@ public class NetworkManager {
         return server.getMinecraftServer().getPlayerList().getPlayer(profile.getId());
     }
 
+    protected boolean hasHandlerFor(IPancakeExtra extra, Class<? extends Packet<?>> cl) {
+        return handlerMap.containsKeyOf(extra, cl);
+    }
+
+    protected boolean hasHandler(Class<?> cl) {
+        return handlerMap.valuesMap().stream().anyMatch((map) -> map.containsKey(cl));
+    }
+
+    protected Collection<PacketHandler<? extends Packet<?>>> getAllHandlerof(Class<?> cl) {
+        Iterator<Map<Class<? extends Packet<?>>, PacketHandler<? extends Packet<?>>>> iter = handlerMap.valuesMap().iterator();
+
+        List<PacketHandler<? extends Packet<?>>> list = new ArrayList<>();
+
+        while (iter.hasNext()) {
+            Map<Class<? extends Packet<?>>, PacketHandler<? extends Packet<?>>> map = iter.next();
+            if (!map.containsKey(cl)) continue;
+
+            list.add(map.get(cl));
+        }
+
+        return list;
+    }
+
+    public <R extends Packet<?>>PacketHandler<R> getHandlerFor(IPancakeExtra extra, Class<R> cl) {
+        return (PacketHandler<R>) handlerMap.computeIfAbsentOf(extra, cl, (clazz) -> new PacketHandler<R>());
+    }
+
+    public void isListenerRegistered(IPancakeExtra extra, Class<? extends Packet<?>> targetPacket, IPacketInListener inListener) {
+        getHandlerFor(extra, targetPacket).isRegistered(inListener);
+    }
+
+    public void isListenerRegistered(IPancakeExtra extra, Class<? extends Packet<?>> targetPacket, IPacketOutListener outListener) {
+        getHandlerFor(extra, targetPacket).isRegistered(outListener);
+    }
+
+    public void registerListener(IPancakeExtra extra, Class<? extends Packet<?>> targetPacket, IPacketInListener inListener) {
+        getHandlerFor(extra, targetPacket).register(inListener);
+    }
+
+    public void registerListener(IPancakeExtra extra, Class<? extends Packet<?>> targetPacket, IPacketOutListener outListener) {
+        getHandlerFor(extra, targetPacket).register(outListener);
+    }
+
+    public void unregisterListener(IPancakeExtra extra, Class<? extends Packet<?>> targetPacket, IPacketInListener inListener) {
+        getHandlerFor(extra, targetPacket).unregister(inListener);
+    }
+
+    public void unregisterListener(IPancakeExtra extra, Class<? extends Packet<?>> targetPacket, IPacketOutListener outListener) {
+        getHandlerFor(extra, targetPacket).unregister(outListener);
+    }
+
+    public void callPacketEvent(AsyncPacketInEvent event) {
+        getAllHandlerof(event.getPacket().getClass()).forEach((handler) -> {
+            Iterator<IPacketInListener> iter = handler.getInIterator();
+
+            while (iter.hasNext()) iter.next().handleIn(event);
+        });
+    }
+
+    public void callPacketEvent(AsyncPacketOutEvent event) {
+        getAllHandlerof(event.getPacket().getClass()).forEach((handler) -> {
+            Iterator<IPacketOutListener> iter = handler.getOutIterator();
+
+            while (iter.hasNext()) iter.next().handleOut(event);
+        });
+    }
+
     public void handleOutPacket(ChannelHandlerContext ctx, Packet<?> packet, ByteBuf buf, PacketFlow flow) throws Exception {
         ConnectionProtocol protocol = ctx.channel().attr(Connection.ATTRIBUTE_PROTOCOL).get();
         if (protocol == null) throw new RuntimeException("Invalid ConnectionProtocol for " + packet);
@@ -71,18 +147,28 @@ public class NetworkManager {
 
         ServerPlayer player = getPlayer(ctx.channel());
 
-        AsyncPacketOutEvent outEvent = new AsyncPacketOutEvent(packet, player);
-        server.getEventManager().callEvent(outEvent);
-        if (outEvent.isCancelled()) return;
+        Packet<?> writePacket = packet;
+        IPacketSerializer serializer = DefaultPacketSerializer.getInstance();
+        
+        if (hasHandler(packet.getClass())) {
+            AsyncPacketOutEvent outEvent = new AsyncPacketOutEvent(packet, player);
+
+            callPacketEvent(outEvent);
+            
+            if (outEvent.isCancelled()) return;
+
+            if (writePacket != outEvent.getPacket()) writePacket = outEvent.getPacket();
+            if (serializer != outEvent.getSerializer()) serializer = outEvent.getSerializer();
+        }
 
         Integer packetId;
-        if (packet instanceof ICustomPacket) {
-            packetId = protocol.getPacketId(flow, ((ICustomPacket<?>) packet).getTargetPacket());
+        if (writePacket instanceof ICustomPacket) {
+            packetId = protocol.getPacketId(flow, ((ICustomPacket<?>) writePacket).getTargetPacket());
         } else {
-            packetId = protocol.getPacketId(flow, packet);
+            packetId = protocol.getPacketId(flow, writePacket);
         }
         try {
-            outEvent.getSerializer().writeTo(wrapped, packetId, packet);
+            serializer.writeTo(wrapped, packetId, writePacket);
         } catch (Throwable throwable) {
             LOGGER.error(throwable);
             if (packet.isSkippable()) throw new SkipPacketException(throwable);
@@ -120,11 +206,18 @@ public class NetworkManager {
 
         ServerPlayer player = getPlayer(ctx.channel());
 
-        AsyncPacketInEvent inEvent = new AsyncPacketInEvent(packet, player);
-        server.getEventManager().callEvent(inEvent);
-        if (inEvent.isCancelled()) return;
+        Packet<?> readPacket = packet;
+        if (hasHandler(packet.getClass())) {
+            AsyncPacketInEvent inEvent = new AsyncPacketInEvent(packet, player);
+            
+            callPacketEvent(inEvent);
+            
+            if (inEvent.isCancelled()) return;
 
-        packetList.add(inEvent.getPacket());
+            if (readPacket != inEvent.getPacket()) readPacket = inEvent.getPacket();
+        }
+
+        packetList.add(readPacket);
     }
 
 }

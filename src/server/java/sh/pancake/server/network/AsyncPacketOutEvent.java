@@ -4,7 +4,7 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.server.impl.event.network;
+package sh.pancake.server.network;
 
 import javax.annotation.Nullable;
 
@@ -30,7 +30,7 @@ public class AsyncPacketOutEvent extends AsyncPacketEvent {
     }
 
     public AsyncPacketOutEvent(Packet<?> packet, @Nullable ServerPlayer sender) {
-        this(packet, sender, new DefaultPacketSerializer());
+        this(packet, sender, DefaultPacketSerializer.getInstance());
     }
 
     public IPacketSerializer getSerializer() {

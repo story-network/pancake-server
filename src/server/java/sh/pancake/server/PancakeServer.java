@@ -24,6 +24,8 @@ import sh.pancake.launcher.classloader.ClassLoaderProvider;
 import sh.pancake.launcher.classloader.ServerClassLoader;
 import sh.pancake.server.command.CommandManager;
 import sh.pancake.server.event.EventManager;
+import sh.pancake.server.event.IEvent;
+import sh.pancake.server.event.IEventListener;
 import sh.pancake.server.mod.ModManager;
 import sh.pancake.server.network.NetworkManager;
 import sh.pancake.server.plugin.PluginManager;
@@ -53,7 +55,7 @@ public class PancakeServer implements IPancakeServer {
 
     private CommandManager<IPancakeExtra> commandManager;
 
-    private EventManager<IPancakeExtra> eventManager;
+    private EventManager<IEvent, IEventListener> eventManager;
 
     private DedicatedServer minecraftServer;
     private ServerStartStatus startStatus;
@@ -85,7 +87,7 @@ public class PancakeServer implements IPancakeServer {
         return networkManager;
     }
 
-    public EventManager<IPancakeExtra> getEventManager() {
+    public EventManager<IEvent, IEventListener> getEventManager() {
         return eventManager;
     }
 

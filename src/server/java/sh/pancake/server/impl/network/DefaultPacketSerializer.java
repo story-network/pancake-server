@@ -13,6 +13,20 @@ import net.minecraft.network.protocol.Packet;
 
 public class DefaultPacketSerializer implements IPacketSerializer {
 
+    private static DefaultPacketSerializer instance;
+    
+    static {
+        instance = new DefaultPacketSerializer();
+    }
+
+    public static DefaultPacketSerializer getInstance() {
+        return instance;
+    }
+
+    private DefaultPacketSerializer() {
+
+    }
+
     @Override
     public void writeTo(FriendlyByteBuf bytebuf, Integer packetId, Packet<?> packet) throws IOException {
         if (packetId == null) {

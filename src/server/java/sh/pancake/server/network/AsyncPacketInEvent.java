@@ -4,7 +4,7 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.server.impl.event.network;
+package sh.pancake.server.network;
 
 import javax.annotation.Nullable;
 
