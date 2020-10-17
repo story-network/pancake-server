@@ -28,6 +28,7 @@ import sh.pancake.server.event.IEvent;
 import sh.pancake.server.event.IEventListener;
 import sh.pancake.server.mod.ModManager;
 import sh.pancake.server.network.NetworkManager;
+import sh.pancake.server.network.payload.PayloadChannelManager;
 import sh.pancake.server.plugin.PluginManager;
 
 public class PancakeServer implements IPancakeServer {
@@ -49,6 +50,7 @@ public class PancakeServer implements IPancakeServer {
     private ServerClassLoader serverClassLoader;
 
     private NetworkManager networkManager;
+    private PayloadChannelManager payloadChannelManager;
 
     private ModManager modManager;
     private PluginManager pluginManager;
@@ -64,6 +66,7 @@ public class PancakeServer implements IPancakeServer {
         this.startTime = -1;
 
         this.networkManager = null;
+        this.payloadChannelManager = null;
 
         this.modManager = null;
         this.pluginManager = null;
@@ -85,6 +88,10 @@ public class PancakeServer implements IPancakeServer {
 
     public NetworkManager getNetworkManager() {
         return networkManager;
+    }
+
+    public PayloadChannelManager getPayloadChannelManager() {
+        return payloadChannelManager;
     }
 
     public EventManager<IEvent, IEventListener> getEventManager() {
@@ -137,6 +144,7 @@ public class PancakeServer implements IPancakeServer {
         this.startStatus = ServerStartStatus.NOT_STARTED;
 
         this.networkManager = new NetworkManager(this);
+        this.payloadChannelManager = new PayloadChannelManager(this);
 
         this.commandManager = new CommandManager<>();
 

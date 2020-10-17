@@ -7,6 +7,7 @@
     "compatibilityLevel": "JAVA_9",
     "server": [
       "accessor.ServerboundResourcePackPacketAccessor",
+      "accessor.ServerboundCustomPayloadPacketAccessor",
       "command.CommandsMixin",
       "network.PacketEncoderMixin",
       "network.PacketDecoderMixin",

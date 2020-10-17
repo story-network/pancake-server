@@ -16,7 +16,7 @@ import net.minecraft.network.protocol.game.ServerboundResourcePackPacket;
 @Mixin(ServerboundResourcePackPacket.class)
 public interface ServerboundResourcePackPacketAccessor {
 
-    @Accessor(value = "action")
+    @Accessor("action")
     ServerboundResourcePackPacket.Action getAction();
 
 }

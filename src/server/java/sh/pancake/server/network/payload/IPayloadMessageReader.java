@@ -6,11 +6,14 @@
 
 package sh.pancake.server.network.payload;
 
+import java.util.function.Consumer;
+
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 
 public interface IPayloadMessageReader {
     
-    void readPayload(ResourceLocation location, FriendlyByteBuf byteBuf);
+    void readPayload(ServerPlayer sender, ResourceLocation location, FriendlyByteBuf byteBuf, Consumer<FriendlyByteBuf> replier);
 
 }
