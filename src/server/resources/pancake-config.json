@@ -8,6 +8,7 @@
     "server": [
       "accessor.ServerboundResourcePackPacketAccessor",
       "accessor.ServerboundCustomPayloadPacketAccessor",
+      "accessor.ServerboundMovePlayerPacketAccessor",
       "command.CommandsMixin",
       "network.PacketEncoderMixin",
       "network.PacketDecoderMixin",

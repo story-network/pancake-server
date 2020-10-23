@@ -15,12 +15,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockBreakAckPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundResourcePackPacket;
 import net.minecraft.server.MinecraftServer;
@@ -39,12 +42,14 @@ import sh.pancake.server.impl.event.player.PlayerChatEvent;
 import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
 import sh.pancake.server.impl.event.player.PlayerFallFlyEvent;
 import sh.pancake.server.impl.event.player.PlayerFinishActionEvent;
+import sh.pancake.server.impl.event.player.PlayerInputEvent;
+import sh.pancake.server.impl.event.player.PlayerJumpEvent;
 import sh.pancake.server.impl.event.player.PlayerPreCommandEvent;
 import sh.pancake.server.impl.event.player.PlayerSwapItemActionEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleCrouchEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleSprintEvent;
 import sh.pancake.server.impl.event.player.PlayerVehicleInputEvent;
-
+import sh.pancake.server.mixin.accessor.ServerboundMovePlayerPacketAccessor;
 import sh.pancake.server.mixin.accessor.ServerboundResourcePackPacketAccessor;
 
 @Mixin(ServerGamePacketListenerImpl.class)
@@ -251,6 +256,49 @@ public abstract class ServerGamePacketListenerImplMixin {
         pancakeServer.getEventManager().callEvent(event);
 
         if (event.isCancelled()) {
+            info.cancel();
+            return;
+        }
+    }
+
+    @Redirect(method = "handleMovePlayer", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.jumpFromGround()V"))
+    public void onPlayerJump(ServerPlayer player) {
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+        PlayerJumpEvent event = new PlayerJumpEvent(player);
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        // TESTING
+        event.setCancelled(true);
+        player.displayClientMessage(new TextComponent("Jump event testing").withStyle(ChatFormatting.RED), false);
+
+        if (event.isCancelled()) {
+            // Broadcast jump cancelling to client
+            player.teleportTo(player.getX(), player.getY(), player.getZ());
+            return;
+        }
+
+        player.jumpFromGround();
+    }
+
+    @Inject(method = "handleMovePlayer", cancellable = true, at = @At("HEAD"))
+    public void onPlayerInput(ServerboundMovePlayerPacket packet, CallbackInfo info) {
+        if (info.isCancelled()) return;
+
+        PancakeServer pancakeServer = (PancakeServer) PancakeLauncher.getLauncher().getServer();
+
+        ServerboundMovePlayerPacketAccessor wrappedPacket = (ServerboundMovePlayerPacketAccessor) packet;
+        PlayerInputEvent event = new PlayerInputEvent(player,
+            wrappedPacket.hasPos(), wrappedPacket.hasRot(),
+            packet.getX(player.getX()), packet.getY(player.getY()), packet.getZ(player.getZ()),
+            packet.getXRot(player.xRot), packet.getYRot(player.yRot));
+
+        pancakeServer.getEventManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            // Broadcast movement cancelling to client
+            player.teleportTo(player.getLevel(), player.getX(), player.getY(), player.getZ(), player.yRot, player.xRot);
+            
             info.cancel();
             return;
         }

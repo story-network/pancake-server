@@ -8,6 +8,7 @@ package sh.pancake.server.network;
 
 import javax.annotation.Nullable;
 
+import io.netty.channel.Channel;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.server.impl.network.DefaultPacketSerializer;
@@ -23,14 +24,14 @@ public class AsyncPacketOutEvent extends AsyncPacketEvent {
 
     private IPacketSerializer serializer;
 
-    public AsyncPacketOutEvent(Packet<?> packet, @Nullable ServerPlayer sender, IPacketSerializer serializer) {
-        super(packet, sender);
+    public AsyncPacketOutEvent(Channel channel, Packet<?> packet, @Nullable ServerPlayer sender, IPacketSerializer serializer) {
+        super(channel, packet, sender);
 
         this.serializer = serializer;
     }
 
-    public AsyncPacketOutEvent(Packet<?> packet, @Nullable ServerPlayer sender) {
-        this(packet, sender, DefaultPacketSerializer.getInstance());
+    public AsyncPacketOutEvent(Channel channel, Packet<?> packet, @Nullable ServerPlayer sender) {
+        this(channel, packet, sender, DefaultPacketSerializer.getInstance());
     }
 
     public IPacketSerializer getSerializer() {

@@ -7,6 +7,7 @@
 package sh.pancake.server.impl.event.player;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import sh.pancake.server.event.EventCancellable;
 
 public abstract class PlayerEvent extends EventCancellable {
@@ -19,6 +20,10 @@ public abstract class PlayerEvent extends EventCancellable {
 
     public ServerPlayer getPlayer() {
         return player;
+    }
+
+    public Level getLevel() {
+        return player.getLevel();
     }
 
 }

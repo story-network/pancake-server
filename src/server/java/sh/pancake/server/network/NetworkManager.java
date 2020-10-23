@@ -131,7 +131,7 @@ public class NetworkManager {
         IPacketSerializer serializer = DefaultPacketSerializer.getInstance();
         
         if (hasHandler(packet.getClass())) {
-            AsyncPacketOutEvent outEvent = new AsyncPacketOutEvent(packet, player);
+            AsyncPacketOutEvent outEvent = new AsyncPacketOutEvent(ctx.channel(), packet, player);
 
             callPacketEvent(outEvent);
             
@@ -196,7 +196,7 @@ public class NetworkManager {
         }
 
         if (hasHandler(packet.getClass())) {
-            AsyncPacketInEvent inEvent = new AsyncPacketInEvent(packet, player);
+            AsyncPacketInEvent inEvent = new AsyncPacketInEvent(ctx.channel(), packet, player);
             
             callPacketEvent(inEvent);
             
