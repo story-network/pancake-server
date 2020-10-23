@@ -268,10 +268,6 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         pancakeServer.getEventManager().callEvent(event);
 
-        // TESTING
-        event.setCancelled(true);
-        player.displayClientMessage(new TextComponent("Jump event testing").withStyle(ChatFormatting.RED), false);
-
         if (event.isCancelled()) {
             // Broadcast jump cancelling to client
             player.teleportTo(player.getX(), player.getY(), player.getZ());
