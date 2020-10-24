@@ -15,12 +15,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.network.protocol.game.ClientboundBlockBreakAckPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -285,11 +283,12 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         ServerboundMovePlayerPacketAccessor wrappedPacket = (ServerboundMovePlayerPacketAccessor) packet;
         PlayerInputEvent event = new PlayerInputEvent(player,
-            wrappedPacket.hasPos(), wrappedPacket.hasRot(),
+            wrappedPacket.hasPos(), wrappedPacket.hasRot(), packet.isOnGround(),
             packet.getX(player.getX()), packet.getY(player.getY()), packet.getZ(player.getZ()),
             packet.getXRot(player.xRot), packet.getYRot(player.yRot));
 
         pancakeServer.getEventManager().callEvent(event);
+
 
         if (event.isCancelled()) {
             // Broadcast movement cancelling to client

@@ -18,7 +18,8 @@ public class PlayerInputEvent extends PlayerEvent {
 
     private boolean moved;
     private boolean rotated;
-        
+    private boolean onGround;
+    
     private double newX;
     private double newY;
     private double newZ;
@@ -27,13 +28,14 @@ public class PlayerInputEvent extends PlayerEvent {
     private float newYRot;
 
     public PlayerInputEvent(ServerPlayer player,
-        boolean moved, boolean rotated,
+        boolean moved, boolean rotated, boolean onGround,
         double newX, double newY, double newZ,
         float newXRot, float newYRot) {
         super(player);
 
         this.moved = moved;
         this.rotated = rotated;
+        this.onGround = onGround;
 
         this.newX = newX;
         this.newY = newY;
@@ -49,6 +51,10 @@ public class PlayerInputEvent extends PlayerEvent {
 
     public boolean isRotated() {
         return rotated;
+    }
+
+    public boolean isOnGround() {
+        return onGround;
     }
 
     public double getNewX() {
