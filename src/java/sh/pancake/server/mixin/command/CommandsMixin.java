@@ -24,6 +24,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
+import sh.pancake.server.command.CommandResult;
 
 @Mixin(Commands.class)
 public abstract class CommandsMixin {
@@ -56,15 +57,12 @@ public abstract class CommandsMixin {
     public int executeDispatcher(CommandDispatcher<CommandSourceStack> dispatcher, StringReader reader, Object source) throws CommandSyntaxException {
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server != null) {
-            try {
-                return server.executeCommand(reader, server.createCommandStack());
-            } catch (CommandSyntaxException e) {
-                if (e.getType() != CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand()) {
-                    throw e;
-                }
+            int lastCursor = reader.getCursor();
 
-                reader.setCursor(0);
-            }
+            CommandResult result = server.executeCommand(reader, server.createCommandStack((CommandSourceStack) source));
+            if (result.isExecuted()) return result.getReturned();
+
+            reader.setCursor(lastCursor);
         }
 
         return dispatcher.execute(reader, (CommandSourceStack) source);

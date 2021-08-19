@@ -18,11 +18,11 @@ public class PancakeCommandStack {
 
     private final PancakeServer server;
 
-    private final CommandSourceStack sourceStack;
+    private final CommandSourceStack innerStack;
     
-    public PancakeCommandStack(PancakeServer server, CommandSourceStack sourceStack) {
+    public PancakeCommandStack(PancakeServer server, CommandSourceStack innerStack) {
         this.server = server;
-        this.sourceStack = sourceStack;
+        this.innerStack = innerStack;
     }
 
     /**
@@ -32,14 +32,14 @@ public class PancakeCommandStack {
      * @return New PancakeCommandStack Object with computed CommandSourceStack
      */
     public PancakeCommandStack compute(Function<CommandSourceStack, CommandSourceStack> function) {
-        return new PancakeCommandStack(server, function.apply(sourceStack));
+        return new PancakeCommandStack(server, function.apply(innerStack));
     }
 
     public PancakeServer getServer() {
         return server;
     }
 
-    public CommandSourceStack getSourceStack() {
-        return sourceStack;
+    public CommandSourceStack getInnerStack() {
+        return innerStack;
     }
 }

@@ -17,8 +17,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.dedicated.DedicatedServer;
 import sh.pancake.server.command.CommandExecutor;
+import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.event.EventDispatcher;
 import sh.pancake.server.mod.ModManager;
@@ -81,16 +83,14 @@ public class PancakeServer implements EventDispatcher, CommandExecutor {
     }
 
     @Override
-    public int executeCommand(StringReader reader, PancakeCommandStack stack) throws CommandSyntaxException {
-        try {
-            return modManager.executeCommand(reader, stack);
-        } catch (CommandSyntaxException e) {
-            if (e.getType() != CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand()) {
-                throw e;
-            }
+    public CommandResult executeCommand(StringReader reader, PancakeCommandStack stack) throws CommandSyntaxException {
+        int lastCursor = reader.getCursor();
 
-            reader.setCursor(0);
-        }
+        CommandResult result = modManager.executeCommand(reader, stack);
+
+        if (result.isExecuted()) return result;
+
+        reader.setCursor(lastCursor);
 
         return pluginManager.executeCommand(reader, stack);
     }
@@ -105,7 +105,16 @@ public class PancakeServer implements EventDispatcher, CommandExecutor {
         DedicatedServer server = service.getDedicatedServer();
         if (server == null) throw new IllegalStateException("Minecraft server instance is not created");
 
-        return new PancakeCommandStack(this, server.createCommandSourceStack());
+        return createCommandStack(server.createCommandSourceStack());
+    }
+
+    /**
+     * Wrap CommandSourceStack and create to PancakeCommandStack
+     * @param inner
+     * @return
+     */
+    public PancakeCommandStack createCommandStack(CommandSourceStack inner) {
+        return new PancakeCommandStack(this, inner);
     }
 
     protected void close() {
