@@ -1,61 +1,28 @@
 /*
- * Created on Sat Sep 26 2020
+ * Created on Sun Aug 08 2021
  *
- * Copyright (c) storycraft. Licensed under the MIT Licence.
+ * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
-
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
-buildscript {
-    repositories {
-        maven {
-            name = 'StoryNetwork'
-            url = 'https://raw.githubusercontent.com/story-network/maven/master/'
-        }
-
-        maven {
-            url = 'https://maven.heartpattern.io/repository/maven-public/'
-        }
-    }
-
-    dependencies {
-        classpath 'sh.pancake:storymap:1.0.0'
-    }
-}
 
 plugins {
     id 'java'
-    id 'maven-publish'
-    id 'com.github.johnrengelman.shadow' version '6.0.0'
+    id 'distribution'
+    id 'sh.pancake.storymap' version '3.0.0'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-apply plugin: 'sh.pancake.storymap'
+java.toolchain.languageVersion = JavaLanguageVersion.of(11)
 
-// Info
-group 'sh.pancake'
-version '1.0.0'
-
-sourceCompatibility = 1.9
-targetCompatibility = 1.9
-
-jar.enabled = false
-
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
 }
 
 repositories {
-
-    jcenter()
     mavenCentral()
 
     maven {
         name = 'Sponge'
         url = 'https://repo.spongepowered.org/maven'
-    }
-
-    maven {
-        url = 'https://maven.heartpattern.io/repository/maven-public/'
     }
 
     maven {
@@ -67,153 +34,58 @@ repositories {
         name = 'StoryNetwork'
         url = 'https://raw.githubusercontent.com/story-network/maven/master/'
     }
-
-}
-
-minecraft {
-    version = '1.16.3'
 }
 
 configurations {
-    implementation.extendsFrom(embed)
+    compileOnly.extendsFrom launcher
 }
 
 dependencies {
+    // Minecraft server
+    storymap name: 'minecraft-server', version: '1.16.5'
 
-    embed 'sh.pancake:story-network-common:1.0.0'
+    implementation 'org.jline:jline-terminal:3.19.0'
+    implementation 'org.jline:jline-terminal-jansi:3.19.0'
+    implementation 'org.jline:jline-reader:3.19.0'
 
-    // Runtime mc deobfuscator
-    embed 'io.heartpattern:mcremapper:2.0.2-SNAPSHOT'
+    implementation 'net.minecrell:terminalconsoleappender:1.2.0'
 
-    // MC Command engine (already included but but embed latest)
-    embed 'com.mojang:brigadier:1.0.17'
+    compileOnly 'sh.pancake:pancake-launcher:0.4.0'
 
-    // Mixin modding
-    embed('org.spongepowered:mixin:0.8') {
-        exclude module: 'launchwrapper'
-        exclude module: 'modlauncher'
-        exclude group: 'org.apache.logging.log4j', module: 'log4j-core'
-    }
+    // compileOnly files('./build/libs/pancake-launcher-0.4.0-all.jar')
     
-    embed group: 'com.google.guava', name: 'guava', version: '29.0-jre'
+    implementation 'com.google.code.gson:gson:2.8.7'
 
-    embed 'com.google.code.gson:gson:2.8.6'
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+}
 
-    // Kotlin support
-    embed 'org.jetbrains.kotlin:kotlin-stdlib:1.4.10'
-    embed 'org.jetbrains.kotlin:kotlin-reflect:1.4.10'
+tasks.named('test') {
+    useJUnitPlatform()
+}
 
-    // log4j for logging
-    embed 'org.apache.logging.log4j:log4j-core:2.8.1'
-    embed 'org.apache.logging.log4j:log4j-api:2.8.1'
-    embed 'org.apache.logging.log4j:log4j-slf4j-impl:2.8.1'
-
-    // asm for mixin
-    implementation 'org.ow2.asm:asm:7.1'
-	implementation 'org.ow2.asm:asm-analysis:7.1'
-	implementation 'org.ow2.asm:asm-commons:7.1'
-	implementation 'org.ow2.asm:asm-tree:7.1'
-
-    // idk why but mixin exclude this
-	embed 'org.ow2.asm:asm-util:7.1'
-
+java {
+	withSourcesJar()
 }
 
 sourceSets {
-
-    launcher {
-
+    main {
         java {
-            srcDir 'src/launcher/java'
+            srcDir 'src/java'
         }
 
         resources {
-            srcDir 'src/launcher/resources'
+            srcDir 'src/resources'
         }
-
-        compileClasspath += sourceSets.main.compileClasspath
-        runtimeClasspath += sourceSets.main.runtimeClasspath
-    }
-
-    server {
-
-        java {
-            srcDir 'src/server/java'
-        }
-
-        resources {
-            srcDir 'src/server/resources'
-        }
-
-        compileClasspath += sourceSets.launcher.output
-        runtimeClasspath += sourceSets.launcher.output
-
-        compileClasspath += sourceSets.main.compileClasspath
-        runtimeClasspath += sourceSets.main.runtimeClasspath
-
-    }
-
-}
-
-task createServerJar(type: Jar) {
-    doFirst {
-        // Copy target_version so Launcher can identify it
-        new File("${buildDir}/resources/server", "target_version").text = minecraft.version
-    }
-
-    from sourceSets.server.output
-
-    archiveAppendix = 'server'
-}
-
-task createLauncherJar(type: ShadowJar) {
-    // Link server jar
-    new File("${buildDir}/resources/launcher", "target_server").text = "${rootProject.name}-server-${version}.jar"
-
-    from sourceSets.launcher.output
-
-    archiveAppendix = 'launcher'
-
-    configurations = [project.configurations.embed]
-
-    // Exclude lib signatures
-    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
-
-    manifest {
-        attributes 'Created-From': System.properties['java.vm.version'] + ' (' + System.properties['java.vm.vendor'] + ')'
-        attributes 'Main-Class': 'sh.pancake.launcher.main.Main'
     }
 }
 
-task createLibJar(type: ShadowJar) {
+tasks.build.dependsOn shadowJar
 
-    from createLauncherJar
-    from createServerJar
-
-}
-
-artifacts {
-
-    archives createServerJar
-    archives createLauncherJar
-
-}
-
-publishing {
-    repositories {
-        maven {
-            name = 'StoryNetwork'
-            url = uri('../maven')
+distributions {
+    main {
+        contents {
+            from shadowJar
+            from(project.configurations.launcher)
         }
-    }
-
-    publications {
-
-        mavenAllLib(MavenPublication) {
-            artifactId = 'pancake-server'
-
-            artifact createLibJar
-        }
-
     }
 }

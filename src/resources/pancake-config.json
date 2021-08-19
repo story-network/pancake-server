@@ -1,0 +1,20 @@
+{
+    "required": true,
+    "minVersion": "0.6",
+    "package": "sh.pancake.server.mixin",
+    "priority": 999999,
+    "mixinPriority": -999999,
+    "compatibilityLevel": "JAVA_11",
+    "server": [
+      "accessor.ServerConnectionListenerAccessor",
+      "accessor.CommandNodeAccessor",
+      "command.CommandsMixin",
+      "MinecraftServerMixin",
+      "DedicatedServerMixin",
+      "ServerConnectionListenerMixin"
+    ],
+    "injectors": {
+      "defaultRequire": 1
+    }
+  }
+  

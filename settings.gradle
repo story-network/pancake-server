@@ -1,7 +1,18 @@
 /*
  * Created on Mon Sep 28 2020
  *
- * Copyright (c) storycraft. Licensed under the MIT Licence.
+ * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
+
+pluginManagement {
+    repositories {
+        maven {
+            name = 'StoryNetwork'
+            url = 'https://raw.githubusercontent.com/story-network/maven/master/'
+        }
+
+        gradlePluginPortal()
+    }
+}
 
 rootProject.name = 'pancake-server'

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>story-network</name>
+	<name>pancake-server</name>
 	<comment>Project server created by Buildship.</comment>
 	<projects>
 	</projects>
@@ -22,7 +22,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>0</id>
+			<id>1628421899488</id>
 			<name></name>
 			<type>30</type>
 			<matcher>
