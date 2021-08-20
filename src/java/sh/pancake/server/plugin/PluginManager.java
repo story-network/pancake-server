@@ -13,7 +13,10 @@ import javax.annotation.Nullable;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.tree.CommandNode;
 
+import net.minecraft.commands.SharedSuggestionProvider;
+import sh.pancake.server.command.CommandAdvisor;
 import sh.pancake.server.command.CommandExecutor;
 import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandStack;
@@ -22,7 +25,7 @@ import sh.pancake.server.extension.Extension;
 import sh.pancake.server.extension.ExtensionStore;
 import sh.pancake.server.util.ExtensionUtil;
 
-public class PluginManager implements EventDispatcher, CommandExecutor {
+public class PluginManager implements EventDispatcher, CommandExecutor, CommandAdvisor {
 
     private final ExtensionStore<PluginInfo> store;
 
@@ -56,6 +59,11 @@ public class PluginManager implements EventDispatcher, CommandExecutor {
         return ExtensionUtil.dispatchCommand(store, reader, stack);
     }
 
+    @Override
+    public void fillSuggestion(CommandNode<SharedSuggestionProvider> suggestion, PancakeCommandStack stack) {
+        ExtensionUtil.fillSuggestion(store, suggestion, stack);
+    }
+
     public boolean loadPlugin(Extension<PluginInfo> extension) {
         if (store.contains(extension)) return false;
 
@@ -66,13 +74,21 @@ public class PluginManager implements EventDispatcher, CommandExecutor {
     }
 
     public boolean unloadPlugin(String id) {
+        return unloadPlugin(id, false);
+    }
+
+    public boolean unloadPlugin(String id, boolean recursive) {
         var ext = get(id);
         if (ext == null) return false;
 
-        return unloadPlugin(ext);
+        return unloadPlugin(ext, recursive);
     }
 
     public boolean unloadPlugin(Extension<PluginInfo> extension) {
+        return unloadPlugin(extension, false);
+    }
+
+    public boolean unloadPlugin(Extension<PluginInfo> extension, boolean recursive) {
         if (!store.contains(extension)) return false;
 
 
@@ -82,13 +98,21 @@ public class PluginManager implements EventDispatcher, CommandExecutor {
     }
 
     public boolean reloadPlugin(String id) {
+        return reloadPlugin(id, false);
+    }
+
+    public boolean reloadPlugin(String id, boolean recursive) {
         var ext = get(id);
         if (ext == null) return false;
 
-        return reloadPlugin(ext);
+        return reloadPlugin(ext, recursive);
+    }
+    
+    public boolean reloadPlugin(Extension<PluginInfo> extension) {
+        return reloadPlugin(extension, false);
     }
 
-    public boolean reloadPlugin(Extension<PluginInfo> extension) {
+    public boolean reloadPlugin(Extension<PluginInfo> extension, boolean recursive) {
         if (!store.contains(extension)) return false;
 
 

@@ -10,7 +10,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.tree.CommandNode;
 
+import net.minecraft.commands.SharedSuggestionProvider;
 import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.extension.ExtensionStore;
@@ -41,5 +43,12 @@ public class ExtensionUtil {
         }
 
         return new CommandResult(false, 0);
+    }
+
+    public static void fillSuggestion(ExtensionStore<?> store, CommandNode<SharedSuggestionProvider> suggestion, PancakeCommandStack stack) {
+        var iterator = store.iterator();
+        while (iterator.hasNext()) {
+            BrigadierUtil.addSuggestion(suggestion, iterator.next().getCommandDispatcher().getRoot(), stack);
+        }
     }
 }

@@ -13,45 +13,53 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.RootCommandNode;
 
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.protocol.game.ClientboundCommandsPacket;
+import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
 import sh.pancake.server.command.CommandResult;
+import sh.pancake.server.util.BrigadierUtil;
 
 @Mixin(Commands.class)
 public abstract class CommandsMixin {
 
     @Shadow
-    abstract void fillUsableCommands(CommandNode<CommandSourceStack> root, CommandNode<SharedSuggestionProvider> suggestion, CommandSourceStack stack, Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> redirectMap);
+    @Final
+    private CommandDispatcher<CommandSourceStack> dispatcher;
 
-    /*
     @Inject(method = "sendCommands", at = @At("HEAD"), cancellable = true)
     public void sendCommandsPre(ServerPlayer player, CallbackInfo info) {
         if (info.isCancelled()) return;
 
-        PancakeServer server = PancakeServerService.getService().getServer();
-        if (server == null) return;
-
         // No we will merge every commands
         info.cancel();
 
-        Map<CommandNode<?>, CommandNode<SharedSuggestionProvider>> redirectMap = new HashMap<>();
-        RootCommandNode<SharedSuggestionProvider> rootSuggestion = new RootCommandNode<>();
-        redirectMap.put(dispatcher.getRoot(), rootSuggestion);
+        RootCommandNode<SharedSuggestionProvider> suggestion = new RootCommandNode<>();
 
-        nestedDispatcher.fillUsableCommandList(rootSuggestion, new CommandStack(nestedDispatcher.getPancakeServer(), player.createCommandSourceStack()), redirectMap);
+        CommandSourceStack source = player.createCommandSourceStack();
 
-        player.connection.send(new ClientboundCommandsPacket(rootSuggestion));
+        BrigadierUtil.addSuggestion(suggestion, dispatcher.getRoot(), source);
+
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server != null) {
+            server.fillSuggestion(suggestion, server.createCommandStack(source));
+        }
+
+        player.connection.send(new ClientboundCommandsPacket(suggestion));
     }
-    */
 
     @Redirect(method = "performCommand", at = @At(value = "INVOKE", target = "Lcom/mojang/brigadier/CommandDispatcher;execute(Lcom/mojang/brigadier/StringReader;Ljava/lang/Object;)I"))
     public int executeDispatcher(CommandDispatcher<CommandSourceStack> dispatcher, StringReader reader, Object source) throws CommandSyntaxException {

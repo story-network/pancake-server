@@ -12,22 +12,30 @@ import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.tree.CommandNode;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.TextComponent;
+import sh.pancake.server.command.CommandAdvisor;
 import sh.pancake.server.command.CommandExecutor;
 import sh.pancake.server.command.CommandResult;
+import sh.pancake.server.command.DynamicCommandDispatcher;
 import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.event.EventDispatcher;
 import sh.pancake.server.mod.ModManager;
 import sh.pancake.server.network.ServerNetworkManager;
 import sh.pancake.server.plugin.PluginManager;
+import sh.pancake.server.util.BrigadierUtil;
 
-public class PancakeServer implements EventDispatcher, CommandExecutor {
+public class PancakeServer implements EventDispatcher, CommandAdvisor, CommandExecutor {
 
     private static final Logger LOGGER = LogManager.getLogger();
 
@@ -82,9 +90,31 @@ public class PancakeServer implements EventDispatcher, CommandExecutor {
         modManager.dispatchEvent(event);
     }
 
+    private final DynamicCommandDispatcher<PancakeCommandStack> dispatcher = new DynamicCommandDispatcher<>();
+
+    {
+        LiteralArgumentBuilder<PancakeCommandStack> literal = LiteralArgumentBuilder.literal("test");
+        RequiredArgumentBuilder<PancakeCommandStack, String> arg = RequiredArgumentBuilder.argument("text", StringArgumentType.greedyString());
+
+        dispatcher.register(
+            literal.then(arg.executes((ctx) -> {
+                ctx.getSource().getInnerStack().sendSuccess(
+                    new TextComponent(StringArgumentType.getString(ctx, "text")),
+                    false
+                );
+                return 1;
+            }))
+        );
+    }
+
     @Override
     public CommandResult executeCommand(StringReader reader, PancakeCommandStack stack) throws CommandSyntaxException {
         int lastCursor = reader.getCursor();
+
+        var parsed = dispatcher.parse(reader, stack);
+        if (!parsed.getContext().getRange().isEmpty()) {
+            return new CommandResult(true, dispatcher.execute(parsed));
+        }
 
         CommandResult result = modManager.executeCommand(reader, stack);
 
@@ -95,17 +125,12 @@ public class PancakeServer implements EventDispatcher, CommandExecutor {
         return pluginManager.executeCommand(reader, stack);
     }
 
-    /**
-     * Create new PancakeCommandStack
-     *
-     * @return New PancakeCommandStack
-     * @throws IllegalStateException Minecraft server instance is not created
-     */
-    public PancakeCommandStack createCommandStack() throws IllegalStateException {
-        DedicatedServer server = service.getDedicatedServer();
-        if (server == null) throw new IllegalStateException("Minecraft server instance is not created");
+    @Override
+    public void fillSuggestion(CommandNode<SharedSuggestionProvider> suggestion, PancakeCommandStack stack) {
+        modManager.fillSuggestion(suggestion, stack);
+        pluginManager.fillSuggestion(suggestion, stack);
 
-        return createCommandStack(server.createCommandSourceStack());
+        BrigadierUtil.addSuggestion(suggestion, dispatcher.getRoot(), stack);
     }
 
     /**

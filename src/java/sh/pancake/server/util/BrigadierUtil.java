@@ -6,8 +6,15 @@
 
 package sh.pancake.server.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.synchronization.SuggestionProviders;
 import sh.pancake.server.mixin.accessor.CommandNodeAccessor;
 
 public class BrigadierUtil {
@@ -19,6 +26,61 @@ public class BrigadierUtil {
         nodeAccessor.getChildren().remove(literal);
         nodeAccessor.getLiterals().remove(literal);
         nodeAccessor.getArguments().remove(literal);
+    }
+
+    public static <T> void addSuggestion(
+        CommandNode<SharedSuggestionProvider> suggestion,
+        CommandNode<T> root,
+        T source
+    ) {
+        Map<CommandNode<T>, CommandNode<SharedSuggestionProvider>> redirectMap = new HashMap<>();
+
+        redirectMap.put(root, suggestion);
+        addSuggestionInner(suggestion, root, source, redirectMap);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> void addSuggestionInner(
+        CommandNode<SharedSuggestionProvider> suggestion,
+        CommandNode<T> root,
+        T source,
+        Map<CommandNode<T>, CommandNode<SharedSuggestionProvider>> redirectMap
+    ) {
+        var iterator = root.getChildren().iterator();
+
+        while (iterator.hasNext()) {
+            var node = iterator.next();
+
+            if (node.canUse(source)) {
+                ArgumentBuilder<SharedSuggestionProvider, ?> arg = (ArgumentBuilder<SharedSuggestionProvider, ?>) node.createBuilder();
+
+                // Invalidate copied requirement
+                arg.requires((stack) -> true);
+                if (arg.getCommand() != null) {
+                    arg.executes((ctx) -> 0);
+                }
+
+                if (arg instanceof RequiredArgumentBuilder) {
+                    RequiredArgumentBuilder<SharedSuggestionProvider, ?> requiredArg = (RequiredArgumentBuilder<SharedSuggestionProvider, ?>) arg;
+                    if (requiredArg.getSuggestionsProvider() != null) {
+                        requiredArg.suggests(SuggestionProviders.safelySwap(requiredArg.getSuggestionsProvider()));
+                    }
+                }
+
+                if (arg.getRedirect() != null) {
+                    arg.redirect(redirectMap.get(arg.getRedirect()));
+                }
+
+                CommandNode<SharedSuggestionProvider> child = arg.build();
+
+                redirectMap.put(node, child);
+                suggestion.addChild(child);
+
+                if (!node.getChildren().isEmpty()) {
+                    addSuggestionInner(child, node, source, redirectMap);
+                }
+            }
+        }
     }
 
 }

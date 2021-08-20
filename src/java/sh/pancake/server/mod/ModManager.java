@@ -13,7 +13,10 @@ import javax.annotation.Nullable;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.tree.CommandNode;
 
+import net.minecraft.commands.SharedSuggestionProvider;
+import sh.pancake.server.command.CommandAdvisor;
 import sh.pancake.server.command.CommandExecutor;
 import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandStack;
@@ -22,7 +25,7 @@ import sh.pancake.server.extension.Extension;
 import sh.pancake.server.extension.ExtensionStore;
 import sh.pancake.server.util.ExtensionUtil;
 
-public class ModManager implements EventDispatcher, CommandExecutor {
+public class ModManager implements EventDispatcher, CommandExecutor, CommandAdvisor {
     
     private final ExtensionStore<ModInfo> store;
 
@@ -51,6 +54,11 @@ public class ModManager implements EventDispatcher, CommandExecutor {
     @Override
     public CommandResult executeCommand(StringReader reader, PancakeCommandStack stack) throws CommandSyntaxException {
         return ExtensionUtil.dispatchCommand(store, reader, stack);
+    }
+
+    @Override
+    public void fillSuggestion(CommandNode<SharedSuggestionProvider> suggestion, PancakeCommandStack stack) {
+        ExtensionUtil.fillSuggestion(store, suggestion, stack);
     }
 
 }
