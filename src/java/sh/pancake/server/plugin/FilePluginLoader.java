@@ -9,6 +9,8 @@ package sh.pancake.server.plugin;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -35,8 +37,9 @@ public class FilePluginLoader implements ExtensionLoader<PluginInfo> {
     
             try (InputStream configStream = zipFile.getInputStream(configEntry)) {
                 PluginInfo info = new Gson().fromJson(new String(configStream.readAllBytes()), PluginInfo.class);
-    
-                return new Extension<>(info.getId(), file.toURI().toURL(), info);
+                List<String> dependencies = info.getDependencies() != null ? info.getDependencies() : new ArrayList<>();
+
+                return new Extension<>(info.getId(), file.toURI().toURL(), dependencies, info);
             }
         }
     }

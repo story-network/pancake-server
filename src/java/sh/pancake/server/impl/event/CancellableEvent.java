@@ -6,7 +6,7 @@
 
 package sh.pancake.server.impl.event;
 
-public class CancellableEvent {
+public abstract class CancellableEvent {
     
     private boolean cancelled = false;
 

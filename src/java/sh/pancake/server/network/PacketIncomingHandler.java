@@ -14,7 +14,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelHandler.Sharable;
 import sh.pancake.server.event.EventDispatcher;
-import sh.pancake.server.impl.event.concurrent.network.PacketInEvent;
+import sh.pancake.server.impl.event.network.PacketInEvent;
 
 @Sharable
 public class PacketIncomingHandler extends ChannelInboundHandlerAdapter {

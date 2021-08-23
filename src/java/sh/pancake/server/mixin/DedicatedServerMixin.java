@@ -42,7 +42,7 @@ public abstract class DedicatedServerMixin {
     /**
      * Fire post initialization
      */
-    @Inject(method = "initServer", at = @At("RETURN"))
+    @Inject(method = "initServer", at = @At("TAIL"))
     void initServerPost(CallbackInfoReturnable<Boolean> info) {
         PancakeServerService service = PancakeServerService.getService();
 

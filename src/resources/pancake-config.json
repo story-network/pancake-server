@@ -8,10 +8,15 @@
     "server": [
       "accessor.ServerConnectionListenerAccessor",
       "accessor.CommandNodeAccessor",
+      "accessor.ServerboundCustomPayloadPacketAccessor",
+      "accessor.ConnectionAccessor",
+      "accessor.ServerboundResourcePackPacketAccessor",
       "command.CommandsMixin",
       "MinecraftServerMixin",
       "DedicatedServerMixin",
-      "ServerConnectionListenerMixin"
+      "ServerConnectionListenerMixin",
+      "network.ServerStatusPacketListenerImplMixin",
+      "network.ServerGamePacketListenerImplMixin",
     ],
     "injectors": {
       "defaultRequire": 1

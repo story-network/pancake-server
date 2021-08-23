@@ -35,17 +35,18 @@ public class BrigadierUtil {
     ) {
         Map<CommandNode<T>, CommandNode<SharedSuggestionProvider>> redirectMap = new HashMap<>();
 
-        redirectMap.put(root, suggestion);
-        addSuggestionInner(suggestion, root, source, redirectMap);
+        addSuggestion(suggestion, root, source, redirectMap);
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> void addSuggestionInner(
+    public static <T> void addSuggestion(
         CommandNode<SharedSuggestionProvider> suggestion,
         CommandNode<T> root,
         T source,
         Map<CommandNode<T>, CommandNode<SharedSuggestionProvider>> redirectMap
     ) {
+        redirectMap.put(root, suggestion);
+
         var iterator = root.getChildren().iterator();
 
         while (iterator.hasNext()) {
@@ -77,7 +78,7 @@ public class BrigadierUtil {
                 suggestion.addChild(child);
 
                 if (!node.getChildren().isEmpty()) {
-                    addSuggestionInner(child, node, source, redirectMap);
+                    addSuggestion(child, node, source, redirectMap);
                 }
             }
         }

@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.Mixins;
 
 import sh.pancake.launcher.classloader.DynamicURLClassLoader;
 import sh.pancake.server.PancakeServer;
+import sh.pancake.server.extension.DependencySorter;
 import sh.pancake.server.extension.ExtensionStore;
 import sh.pancake.server.util.ExecutorServiceUtil;
 
@@ -29,7 +30,7 @@ public class ModInitializer {
     }
 
     public void load(ExtensionStore<ModInfo> store) throws Exception {
-        var iterator = store.iterator();
+        var iterator = new DependencySorter<>(store).sortedList().iterator();
 
         List<Callable<Void>> taskList = new ArrayList<>();
 

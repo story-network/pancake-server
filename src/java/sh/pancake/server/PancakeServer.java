@@ -6,6 +6,8 @@
 
 package sh.pancake.server;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,11 +17,11 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.resources.ResourceLocation;
 import sh.pancake.server.command.CommandAdvisor;
 import sh.pancake.server.command.CommandExecutor;
 import sh.pancake.server.command.CommandResult;
@@ -27,11 +29,12 @@ import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.event.EventDispatcher;
 import sh.pancake.server.mod.ModManager;
 import sh.pancake.server.network.ServerNetworkManager;
+import sh.pancake.server.network.payload.PayloadCollector;
+import sh.pancake.server.network.payload.GlobalPayloadListener;
 import sh.pancake.server.plugin.PluginManager;
 
-public class PancakeServer implements EventDispatcher, CommandAdvisor, CommandExecutor {
-
-    private static final Logger LOGGER = LogManager.getLogger();
+public class PancakeServer
+        implements EventDispatcher, CommandAdvisor, CommandExecutor, PayloadCollector, GlobalPayloadListener {
 
     private final PancakeServerService service;
 
@@ -42,7 +45,7 @@ public class PancakeServer implements EventDispatcher, CommandAdvisor, CommandEx
 
     private ServerNetworkManager network;
 
-    protected PancakeServer(PancakeServerService service, ModManager modManager, PluginManager pluginManager) {
+    public PancakeServer(PancakeServerService service, ModManager modManager, PluginManager pluginManager) {
         this.service = service;
 
         this.executorService = Executors.newCachedThreadPool();
@@ -90,7 +93,8 @@ public class PancakeServer implements EventDispatcher, CommandAdvisor, CommandEx
 
         CommandResult result = modManager.executeCommand(reader, stack);
 
-        if (result.isExecuted()) return result;
+        if (result.isExecuted())
+            return result;
 
         reader.setCursor(lastCursor);
 
@@ -98,13 +102,18 @@ public class PancakeServer implements EventDispatcher, CommandAdvisor, CommandEx
     }
 
     @Override
-    public void fillSuggestion(CommandNode<SharedSuggestionProvider> suggestion, PancakeCommandStack stack) {
-        modManager.fillSuggestion(suggestion, stack);
-        pluginManager.fillSuggestion(suggestion, stack);
+    public void fillSuggestion(
+        CommandNode<SharedSuggestionProvider> suggestion,
+        PancakeCommandStack stack,
+        Map<CommandNode<PancakeCommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap
+    ) {
+        modManager.fillSuggestion(suggestion, stack, redirectMap);
+        pluginManager.fillSuggestion(suggestion, stack, redirectMap);
     }
 
     /**
      * Wrap CommandSourceStack and create to PancakeCommandStack
+     * 
      * @param inner
      * @return
      */
@@ -112,8 +121,23 @@ public class PancakeServer implements EventDispatcher, CommandAdvisor, CommandEx
         return new PancakeCommandStack(this, inner);
     }
 
+    @Override
+    public void fillPayloadChannels(Set<ResourceLocation> set) {
+        modManager.fillPayloadChannels(set);
+        pluginManager.fillPayloadChannels(set);
+    }
+
+    @Override
+    public void processPayload(ResourceLocation identifier, Channel channel, ByteBuf buf) {
+        modManager.processPayload(identifier, channel, buf);
+        pluginManager.processPayload(identifier, channel, buf);
+    }
+
     protected void close() {
-        if (network != null) network.close();
+        if (network != null)
+            network.close();
+
+        executorService.shutdownNow();
     }
 
 }

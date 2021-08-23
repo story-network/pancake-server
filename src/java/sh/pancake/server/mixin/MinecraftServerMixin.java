@@ -21,7 +21,7 @@ import sh.pancake.server.impl.event.server.ServerTickEvent;
 
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin {
-    
+
     /**
      * Overwrite brand name
      */
@@ -32,8 +32,6 @@ public abstract class MinecraftServerMixin {
 
     @Inject(method = "tickServer", at = @At("HEAD"), cancellable = true)
     void tickServerPre(BooleanSupplier haveTime, CallbackInfo info) {
-        if (info.isCancelled()) return;
-
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server == null) return;
 

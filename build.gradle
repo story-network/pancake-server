@@ -7,7 +7,7 @@
 plugins {
     id 'java'
     id 'distribution'
-    id 'sh.pancake.storymap' version '3.0.0'
+    id 'sh.pancake.storymap' version '3.0.2'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 

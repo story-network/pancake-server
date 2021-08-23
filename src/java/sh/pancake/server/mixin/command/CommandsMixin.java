@@ -6,13 +6,9 @@
 
 package sh.pancake.server.mixin.command;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 
 import org.spongepowered.asm.mixin.Final;

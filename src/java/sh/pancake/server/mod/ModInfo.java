@@ -26,6 +26,9 @@ public final class ModInfo {
     @SerializedName("authors")
     private List<String> authors;
 
+    @SerializedName("dependencies")
+    private List<String> dependencies;
+
     @SerializedName("entrypoint")
     private String entryClassName;
 
@@ -49,12 +52,19 @@ public final class ModInfo {
         return mixinConfigName;
     }
 
+    @Nullable
     public String getDescription() {
         return description;
     }
 
+    @Nullable
     public List<String> getAuthors() {
         return authors;
+    }
+
+    @Nullable
+    public List<String> getDependencies() {
+        return dependencies;
     }
 
 }

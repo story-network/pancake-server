@@ -15,7 +15,7 @@ import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.ChannelHandler.Sharable;
 import sh.pancake.server.event.EventDispatcher;
-import sh.pancake.server.impl.event.concurrent.network.PacketOutEvent;
+import sh.pancake.server.impl.event.network.PacketOutEvent;
 
 @Sharable
 public class PacketOutgoingHandler extends ChannelOutboundHandlerAdapter {

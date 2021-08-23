@@ -6,7 +6,7 @@
 
 package sh.pancake.server.event;
 
-public class HandlerRegisterException extends Exception {
+public class HandlerRegisterException extends RuntimeException {
 
     public HandlerRegisterException(String message) {
         super(message);

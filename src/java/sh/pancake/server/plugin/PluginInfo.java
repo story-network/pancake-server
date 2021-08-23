@@ -26,6 +26,9 @@ public class PluginInfo {
     @SerializedName("authors")
     private List<String> authors;
 
+    @SerializedName("dependencies")
+    private List<String> dependencies;
+
     @SerializedName("entrypoint")
     private String entryClassName;
 
@@ -45,6 +48,11 @@ public class PluginInfo {
     @Nullable
     public List<String> getAuthors() {
         return authors;
+    }
+
+    @Nullable
+    public List<String> getDependencies() {
+        return dependencies;
     }
 
     public String getEntryClassName() {

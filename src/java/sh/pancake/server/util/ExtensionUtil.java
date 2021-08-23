@@ -6,13 +6,19 @@
 
 package sh.pancake.server.util;
 
+import java.util.Map;
+import java.util.Set;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.resources.ResourceLocation;
 import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.extension.ExtensionStore;
@@ -45,10 +51,29 @@ public class ExtensionUtil {
         return new CommandResult(false, 0);
     }
 
-    public static void fillSuggestion(ExtensionStore<?> store, CommandNode<SharedSuggestionProvider> suggestion, PancakeCommandStack stack) {
+    public static void fillSuggestion(
+        ExtensionStore<?> store,
+        CommandNode<SharedSuggestionProvider> suggestion,
+        PancakeCommandStack stack,
+        Map<CommandNode<PancakeCommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap
+    ) {
         var iterator = store.iterator();
         while (iterator.hasNext()) {
-            BrigadierUtil.addSuggestion(suggestion, iterator.next().getCommandDispatcher().getRoot(), stack);
+            BrigadierUtil.addSuggestion(suggestion, iterator.next().getCommandDispatcher().getRoot(), stack, redirectMap);
+        }
+    }
+
+    public static void fillPayloadChannels(ExtensionStore<?> store, Set<ResourceLocation> set) {
+        var iterator = store.iterator();
+        while (iterator.hasNext()) {
+            set.addAll(iterator.next().getPayloadChannels());
+        }
+    }
+
+    public static void processPayload(ExtensionStore<?> store, ResourceLocation identifier, Channel channel, ByteBuf buf) {
+        var iterator = store.iterator();
+        while (iterator.hasNext()) {
+            iterator.next().processPayload(identifier, channel, buf);
         }
     }
 }

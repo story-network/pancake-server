@@ -15,12 +15,15 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
 import net.minecraft.server.network.ServerConnectionListener;
 import sh.pancake.server.event.EventDispatcher;
+import sh.pancake.server.impl.event.network.ChannelInitializeEvent;
 import sh.pancake.server.network.hook.ServerNetworkHook;
 
 public class ServerNetworkManager implements Closeable {
 
     private static final String INCOMING_HANDLER_NAME = "pancake_incoming_hook";
     private static final String OUTGOING_HANDLER_NAME = "pancake_outgoing_hook";
+
+    private final EventDispatcher dispatcher;
 
     private final ServerNetworkHook globalHook;
 
@@ -30,6 +33,8 @@ public class ServerNetworkManager implements Closeable {
     private final Set<Channel> channels;
 
     public ServerNetworkManager(EventDispatcher dispatcher, ServerConnectionListener serverConnectionListener) {
+        this.dispatcher = dispatcher;
+
         this.globalHook = new ServerNetworkHook(serverConnectionListener, this::handleConnection);
 
         this.incomingHandler = new PacketIncomingHandler(dispatcher);
@@ -51,6 +56,8 @@ public class ServerNetworkManager implements Closeable {
         channel.pipeline().addBefore("encoder", OUTGOING_HANDLER_NAME, outgoingHandler);
 
         channels.add(channel);
+
+        dispatcher.dispatchEvent(new ChannelInitializeEvent(channel));
     }
 
     @Override

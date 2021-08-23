@@ -25,9 +25,10 @@ import net.minecrell.terminalconsole.TerminalConsoleAppender;
 import sh.pancake.launcher.IPancakeServer;
 import sh.pancake.launcher.classloader.DynamicURLClassLoader;
 import sh.pancake.server.console.ServerConsole;
+import sh.pancake.server.extension.DependencySorter;
 import sh.pancake.server.extension.Extension;
 import sh.pancake.server.extension.ExtensionStore;
-import sh.pancake.server.impl.event.concurrent.server.PhaseChangedEvent;
+import sh.pancake.server.impl.event.server.PhaseChangedEvent;
 import sh.pancake.server.mod.FileModLoader;
 import sh.pancake.server.mod.ModInfo;
 import sh.pancake.server.mod.ModInitializer;
@@ -129,7 +130,7 @@ public class PancakeServerService implements IPancakeServer {
 
         ExtensionStore<ModInfo> modStore = new ExtensionStore<>("pancake_mod");
         ModManager modManager = new ModManager(modStore);
-        
+
         PluginManager pluginManager = new PluginManager("pancake_plugin", PancakeServerService.class.getClassLoader());
 
         LOGGER.info("Starting PancakeServer...");
@@ -239,8 +240,8 @@ public class PancakeServerService implements IPancakeServer {
     private void loadPlugins(PluginManager manager) {
         File pluginDirectory = new File(Constants.PLUGIN_DIRECTORY);
         pluginDirectory.mkdirs();
-
-        List<Callable<Void>> taskList = new ArrayList<>();
+        
+        List<Extension<PluginInfo>> list = new ArrayList<>();
 
         for (var file : pluginDirectory.listFiles()) {
             if (file.isDirectory()) {
@@ -253,14 +254,23 @@ public class PancakeServerService implements IPancakeServer {
             try {
                 FilePluginLoader pluginLoader = new FilePluginLoader(file);
                 Extension<PluginInfo> ext = pluginLoader.load();
-                
-                taskList.add(() -> {
-                    manager.loadPlugin(ext);
-                    return null;
-                });
+
+                list.add(ext);
             } catch (Exception e) {
                 LOGGER.warn("File " + file.getName() + " is invalid mod jar file. Skipping...", e);
             }
+        }
+
+        List<Callable<Void>> taskList = new ArrayList<>();
+
+        var iterator = new DependencySorter<>(list).sortedList().iterator();
+        while (iterator.hasNext()) {
+            var ext = iterator.next();
+
+            taskList.add(() -> {
+                manager.loadPlugin(ext);
+                return null;
+            });
         }
 
         try {
@@ -293,6 +303,16 @@ public class PancakeServerService implements IPancakeServer {
     private void doStarted() {
         ensurePhase(ServerPhase.POST_INIT, ServerPhase.STARTED);
 
+    }
+
+    public boolean isServerThread() {
+        return isServerThread(Thread.currentThread());
+    }
+
+    public boolean isServerThread(Thread thread) {
+        if (mcServer == null) return false;
+
+        return mcServer.getRunningThread().equals(thread);
     }
 
     /**

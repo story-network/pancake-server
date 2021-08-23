@@ -9,6 +9,8 @@ package sh.pancake.server.mod;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -35,8 +37,9 @@ public class FileModLoader implements ExtensionLoader<ModInfo> {
     
             try (InputStream configStream = zipFile.getInputStream(configEntry)) {
                 ModInfo info = new Gson().fromJson(new String(configStream.readAllBytes()), ModInfo.class);
+                List<String> dependencies = info.getDependencies() != null ? info.getDependencies() : new ArrayList<>();
     
-                return new Extension<>(info.getId(), file.toURI().toURL(), info);
+                return new Extension<>(info.getId(), file.toURI().toURL(), dependencies, info);
             }
         }
     }

@@ -6,7 +6,6 @@
 
 package sh.pancake.server.event;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +15,13 @@ import java.util.WeakHashMap;
 /**
  * Helper class for registering @EventHandler methods
  */
-public class EventHandlerManager {
+public class EventHandlerRegistrar {
 
     private final EventManager manager;
 
     private final Map<Object, List<FixedListener<?>>> listeners;
 
-    public EventHandlerManager(EventManager manager) {
+    public EventHandlerRegistrar(EventManager manager) {
         this.manager = manager;
         this.listeners = new WeakHashMap<>();
     }

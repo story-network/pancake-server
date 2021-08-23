@@ -6,12 +6,25 @@
 
 package sh.pancake.server.command;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.mojang.brigadier.tree.CommandNode;
 
 import net.minecraft.commands.SharedSuggestionProvider;
 
 public interface CommandAdvisor {
 
-    void fillSuggestion(CommandNode<SharedSuggestionProvider> suggestion, PancakeCommandStack stack);
+    default void fillSuggestion(CommandNode<SharedSuggestionProvider> suggestion, PancakeCommandStack stack) {
+        Map<CommandNode<PancakeCommandStack>, CommandNode<SharedSuggestionProvider>> map = new HashMap<>();
+
+        fillSuggestion(suggestion, stack, map);
+    }
+
+    void fillSuggestion(
+        CommandNode<SharedSuggestionProvider> suggestion,
+        PancakeCommandStack stack,
+        Map<CommandNode<PancakeCommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap
+    );
 
 }

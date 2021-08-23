@@ -6,7 +6,6 @@
 
 package sh.pancake.server.event;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
