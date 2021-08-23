@@ -28,9 +28,9 @@ import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.event.EventDispatcher;
 import sh.pancake.server.extension.Extension;
 import sh.pancake.server.extension.ExtensionStore;
+import sh.pancake.server.extension.ExtensionUtil;
 import sh.pancake.server.network.payload.PayloadCollector;
 import sh.pancake.server.network.payload.GlobalPayloadListener;
-import sh.pancake.server.util.ExtensionUtil;
 
 public class ModManager implements EventDispatcher, CommandExecutor, CommandAdvisor, PayloadCollector, GlobalPayloadListener {
     

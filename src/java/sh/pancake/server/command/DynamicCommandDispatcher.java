@@ -9,8 +9,6 @@ package sh.pancake.server.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.CommandNode;
 
-import sh.pancake.server.util.BrigadierUtil;
-
 /**
  * CommandDispatcher with unregister functionality
  */

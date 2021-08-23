@@ -26,8 +26,8 @@ import net.minecraft.network.protocol.game.ClientboundCommandsPacket;
 import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
+import sh.pancake.server.command.BrigadierUtil;
 import sh.pancake.server.command.CommandResult;
-import sh.pancake.server.util.BrigadierUtil;
 
 @Mixin(Commands.class)
 public abstract class CommandsMixin {

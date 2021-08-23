@@ -11,12 +11,14 @@
       "accessor.ServerboundCustomPayloadPacketAccessor",
       "accessor.ConnectionAccessor",
       "accessor.ServerboundResourcePackPacketAccessor",
+      "accessor.ExplosionAccessor",
       "command.CommandsMixin",
       "MinecraftServerMixin",
       "DedicatedServerMixin",
       "ServerConnectionListenerMixin",
       "network.ServerStatusPacketListenerImplMixin",
       "network.ServerGamePacketListenerImplMixin",
+      "level.ServerLevelMixin",
     ],
     "injectors": {
       "defaultRequire": 1

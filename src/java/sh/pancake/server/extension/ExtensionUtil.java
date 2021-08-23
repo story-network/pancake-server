@@ -4,7 +4,7 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.server.util;
+package sh.pancake.server.extension;
 
 import java.util.Map;
 import java.util.Set;
@@ -19,9 +19,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.resources.ResourceLocation;
+import sh.pancake.server.command.BrigadierUtil;
 import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandStack;
-import sh.pancake.server.extension.ExtensionStore;
 
 public class ExtensionUtil {
 

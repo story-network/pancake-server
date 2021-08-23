@@ -4,7 +4,7 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.server.util;
+package sh.pancake.server.command;
 
 import java.util.HashMap;
 import java.util.Map;
