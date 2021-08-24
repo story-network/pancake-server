@@ -11,8 +11,8 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.RootCommandNode;
 
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,13 +28,27 @@ import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
 import sh.pancake.server.command.BrigadierUtil;
 import sh.pancake.server.command.CommandResult;
+import sh.pancake.server.command.PancakeCommandDispatcher;
 
 @Mixin(Commands.class)
 public abstract class CommandsMixin {
 
     @Shadow
-    @Final
-    private CommandDispatcher<CommandSourceStack> dispatcher;
+    @Mutable
+    private CommandDispatcher<CommandSourceStack> dispatcher = new PancakeCommandDispatcher<>("minecraft");
+
+    // INVALIDATE COMMAND START
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "net/minecraft/server/commands/HelpCommand.register(Lcom/mojang/brigadier/CommandDispatcher;)V"))
+    public void constructor_HelpCommand_register(CommandDispatcher<?> dispatcher) {}
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "net/minecraft/server/commands/StopCommand.register(Lcom/mojang/brigadier/CommandDispatcher;)V"))
+    public void constructor_StopCommand_register(CommandDispatcher<?> dispatcher) {}
+
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "net/minecraft/server/commands/ReloadCommand.register(Lcom/mojang/brigadier/CommandDispatcher;)V"))
+    public void constructor_ReloadCommand_register(CommandDispatcher<?> dispatcher) {}
+
+    // INVALIDATE COMMAND END
 
     @Inject(method = "sendCommands", at = @At("HEAD"), cancellable = true)
     public void sendCommandsPre(ServerPlayer player, CallbackInfo info) {

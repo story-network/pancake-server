@@ -17,7 +17,7 @@ import java.util.Set;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import net.minecraft.resources.ResourceLocation;
-import sh.pancake.server.command.DynamicCommandDispatcher;
+import sh.pancake.server.command.PancakeCommandDispatcher;
 import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.event.EventManager;
 import sh.pancake.server.network.payload.PayloadChannel;
@@ -35,7 +35,7 @@ public class Extension<T> implements PayloadCollector, GlobalPayloadListener {
     private final URL url;
 
     private final EventManager eventManager;
-    private final DynamicCommandDispatcher<PancakeCommandStack> commandDispatcher;
+    private final PancakeCommandDispatcher<PancakeCommandStack> commandDispatcher;
 
     private final Map<ResourceLocation, PayloadChannel> payloadMap;
 
@@ -49,7 +49,7 @@ public class Extension<T> implements PayloadCollector, GlobalPayloadListener {
         this.url = url;
 
         this.eventManager = new EventManager();
-        this.commandDispatcher = new DynamicCommandDispatcher<>();
+        this.commandDispatcher = new PancakeCommandDispatcher<>(id);
 
         this.payloadMap = new HashMap<>();
     }
@@ -74,7 +74,7 @@ public class Extension<T> implements PayloadCollector, GlobalPayloadListener {
         return eventManager;
     }
     
-    public DynamicCommandDispatcher<PancakeCommandStack> getCommandDispatcher() {
+    public PancakeCommandDispatcher<PancakeCommandStack> getCommandDispatcher() {
         return commandDispatcher;
     }
 

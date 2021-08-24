@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
@@ -33,19 +32,13 @@ public class ExtensionUtil {
     }
 
     public static CommandResult dispatchCommand(ExtensionStore<?> store, StringReader reader, PancakeCommandStack stack) throws CommandSyntaxException {
-        int lastCursor = reader.getCursor();
-
         var iterator = store.iterator();
         while (iterator.hasNext()) {
             CommandDispatcher<PancakeCommandStack> dispatcher = iterator.next().getCommandDispatcher();
 
-            ParseResults<PancakeCommandStack> result = dispatcher.parse(reader, stack);
+            CommandResult res = BrigadierUtil.executeCommand(dispatcher, reader, stack);
 
-            if (!result.getContext().getRange().isEmpty()) {
-                return new CommandResult(true, dispatcher.execute(result));
-            }
-
-            reader.setCursor(lastCursor);
+            if (res.isExecuted()) return res;
         }
 
         return new CommandResult(false, 0);

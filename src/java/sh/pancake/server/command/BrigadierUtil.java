@@ -9,9 +9,14 @@ package sh.pancake.server.command;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.ParseResults;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
@@ -53,6 +58,13 @@ public class BrigadierUtil {
             var node = iterator.next();
 
             if (node.canUse(source)) {
+                if (node instanceof LiteralCommandNode) {
+                    LiteralCommandNode<T> literal = (LiteralCommandNode<T>) node;
+                    if (!suggestion.getRelevantNodes(new StringReader(literal.getLiteral())).isEmpty()) {
+                        continue;
+                    }
+                }
+
                 ArgumentBuilder<SharedSuggestionProvider, ?> arg = (ArgumentBuilder<SharedSuggestionProvider, ?>) node.createBuilder();
 
                 // Invalidate copied requirement
@@ -75,6 +87,7 @@ public class BrigadierUtil {
                 CommandNode<SharedSuggestionProvider> child = arg.build();
 
                 redirectMap.put(node, child);
+
                 suggestion.addChild(child);
 
                 if (!node.getChildren().isEmpty()) {
@@ -82,6 +95,19 @@ public class BrigadierUtil {
                 }
             }
         }
+    }
+
+    public static <T> CommandResult executeCommand(CommandDispatcher<T> dispatcher, StringReader reader, T stack) throws CommandSyntaxException {
+        int lastCursor = reader.getCursor();
+
+        ParseResults<T> parsed = dispatcher.parse(reader, stack);
+        if (!parsed.getContext().getRange().isEmpty()) {
+            return new CommandResult(true, dispatcher.execute(parsed));
+        }
+
+        reader.setCursor(lastCursor);
+
+        return new CommandResult(false, 0);
     }
 
 }

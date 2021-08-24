@@ -42,7 +42,7 @@ public class ServerConsole extends SimpleTerminalConsole {
 
     @Override
     protected void shutdown() {
-        service.stopServer();
+        service.stopServer().join();
     }
 
 }

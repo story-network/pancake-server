@@ -27,6 +27,7 @@ import sh.pancake.server.command.CommandExecutor;
 import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.event.EventDispatcher;
+import sh.pancake.server.impl.command.ServerCommands;
 import sh.pancake.server.mod.ModManager;
 import sh.pancake.server.network.ServerNetworkManager;
 import sh.pancake.server.network.payload.PayloadCollector;
@@ -38,6 +39,8 @@ public class PancakeServer
 
     private final PancakeServerService service;
 
+    private final ServerCommands serverCommands;
+
     private final ExecutorService executorService;
 
     private final ModManager modManager;
@@ -47,6 +50,8 @@ public class PancakeServer
 
     public PancakeServer(PancakeServerService service, ModManager modManager, PluginManager pluginManager) {
         this.service = service;
+
+        this.serverCommands = new ServerCommands("pancake", this);
 
         this.executorService = Executors.newCachedThreadPool();
 
@@ -58,6 +63,10 @@ public class PancakeServer
 
     public PancakeServerService getService() {
         return service;
+    }
+
+    public ServerCommands getServerCommands() {
+        return serverCommands;
     }
 
     public ModManager getModManager() {
@@ -89,16 +98,13 @@ public class PancakeServer
 
     @Override
     public CommandResult executeCommand(StringReader reader, PancakeCommandStack stack) throws CommandSyntaxException {
-        int lastCursor = reader.getCursor();
+        CommandResult modResult = modManager.executeCommand(reader, stack);
+        if (modResult.isExecuted()) return modResult;
 
-        CommandResult result = modManager.executeCommand(reader, stack);
+        CommandResult pluginResult = pluginManager.executeCommand(reader, stack);
+        if (pluginResult.isExecuted()) return modResult;
 
-        if (result.isExecuted())
-            return result;
-
-        reader.setCursor(lastCursor);
-
-        return pluginManager.executeCommand(reader, stack);
+        return serverCommands.executeCommand(reader, stack);
     }
 
     @Override
@@ -109,6 +115,7 @@ public class PancakeServer
     ) {
         modManager.fillSuggestion(suggestion, stack, redirectMap);
         pluginManager.fillSuggestion(suggestion, stack, redirectMap);
+        serverCommands.fillSuggestion(suggestion, stack, redirectMap);
     }
 
     /**

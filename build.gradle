@@ -5,7 +5,7 @@
  */
 
 plugins {
-    id 'java'
+    id 'java-library'
     id 'distribution'
     id 'sh.pancake.storymap' version '3.0.2'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
@@ -54,7 +54,7 @@ dependencies {
 
     // compileOnly files('./build/libs/pancake-launcher-0.4.0-all.jar')
     
-    implementation 'com.google.code.gson:gson:2.8.7'
+    api 'com.google.code.gson:gson:2.8.7'
 
     testImplementation group: 'junit', name: 'junit', version: '4.12'
 }

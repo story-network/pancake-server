@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 import javax.annotation.Nullable;
 
@@ -319,32 +320,34 @@ public class PancakeServerService implements IPancakeServer {
      * Stop PancakeServer and Minecraft server.
      * Server will wait to start first if not started yet.
      */
-    public void stopServer() {
+    public CompletableFuture<Void> stopServer() {
         try {
             ensurePhase(ServerPhase.STARTED, ServerPhase.STOPPING);
         } catch (Exception e) {
-            return;
+            return CompletableFuture.completedFuture(null);
         }
 
-        DedicatedServer mcServer = getDedicatedServer();
-        if (mcServer != null) {
-            // Finish mod, plugins
-            mcServer.submit(() -> {}).join();
-            
-            // Wait MC server to finish
-            mcServer.halt(true);
-            mcServer = null;
-        }
-
-        server.close();
-
-        try {
-            TerminalConsoleAppender.close();
-        } catch (IOException e) {
-            LOGGER.error("Error while closing console. Assuming console already closed.", e);
-        }
-
-        ensurePhase(ServerPhase.STOPPING, ServerPhase.FINISHED);
+        return CompletableFuture.runAsync(() -> {
+            DedicatedServer mcServer = getDedicatedServer();
+            if (mcServer != null) {
+                // Finish mod, plugins
+                mcServer.submit(() -> {}).join();
+                
+                // Wait MC server to finish
+                mcServer.halt(true);
+                mcServer = null;
+            }
+    
+            server.close();
+    
+            try {
+                TerminalConsoleAppender.close();
+            } catch (IOException e) {
+                LOGGER.error("Error while closing console. Assuming console already closed.", e);
+            }
+    
+            ensurePhase(ServerPhase.STOPPING, ServerPhase.FINISHED);
+        });
     }
 
 }
