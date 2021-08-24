@@ -54,7 +54,7 @@ public abstract class ServerLevelMixin {
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server == null) return;
 
-        ExplosionAccessor accessor = ((ExplosionAccessor) explosion);
+        ExplosionAccessor accessor = (ExplosionAccessor) explosion;
         
         LevelExplosionPreEvent event = new LevelExplosionPreEvent(
             (ServerLevel) (Object) this,

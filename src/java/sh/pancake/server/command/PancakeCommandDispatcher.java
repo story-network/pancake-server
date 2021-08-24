@@ -45,11 +45,8 @@ public class PancakeCommandDispatcher<S> extends CommandDispatcher<S> {
 
         LiteralArgumentBuilder<S> namespaced = LiteralArgumentBuilder.literal(getFullCommand(node.getLiteral()));
 
-        if (node.getRedirect() != null) {
-            namespaced.redirect(node.getRedirect());
-        } else {
-            namespaced.redirect(node);
-        }
+        namespaced.requires(node.getRequirement());
+        namespaced.forward(node.getRedirect(), node.getRedirectModifier(), node.isFork());
 
         super.register(namespaced);
 

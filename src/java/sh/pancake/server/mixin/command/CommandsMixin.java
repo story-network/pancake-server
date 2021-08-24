@@ -61,12 +61,12 @@ public abstract class CommandsMixin {
 
         CommandSourceStack source = player.createCommandSourceStack();
 
-        BrigadierUtil.addSuggestion(suggestion, dispatcher.getRoot(), source);
-
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server != null) {
             server.fillSuggestion(suggestion, server.createCommandStack(source));
         }
+
+        BrigadierUtil.addSuggestion(suggestion, dispatcher.getRoot(), source);
 
         player.connection.send(new ClientboundCommandsPacket(suggestion));
     }
