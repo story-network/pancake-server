@@ -31,8 +31,10 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.network.TextFilter;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.item.ItemStack;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
 import sh.pancake.server.impl.event.player.PayloadMessageEvent;
@@ -269,7 +271,7 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         Inventory inventory = player.getInventory();
 
-        PlayerDropItemEvent event = new PlayerDropItemEvent(player, dropAll, inventory.getSelected());
+        PlayerDropItemEvent event = new PlayerDropItemEvent(player, inventory.getSelected(), dropAll);
         server.dispatchEvent(event);
 
         if (event.isCancelled()) {
@@ -285,7 +287,34 @@ public abstract class ServerGamePacketListenerImplMixin {
             return false;
         }
 
-        return player.drop(event.isDropAll());
+        if (inventory.getSelected() != event.getDropItem()) {
+            inventory.removeFromSelected(event.isDropAll());
+            return player.drop(event.getDropItem(), false, true) != null;
+        } else {
+            return player.drop(event.isDropAll());
+        }
+    }
+
+    @Redirect(
+        method = "handleSetCreativeModeSlot",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/level/ServerPlayer.drop(Lnet/minecraft/world/item/ItemStack;Z)Lnet/minecraft/world/entity/item/ItemEntity;"
+        )
+    )
+    public ItemEntity handleSetCreativeModeSlot_drop(ServerPlayer player, ItemStack item, boolean dropAll) {
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) {
+            return player.drop(item, dropAll);
+        }
+
+        PlayerDropItemEvent event = new PlayerDropItemEvent(player, item, dropAll);
+
+        server.dispatchEvent(event);
+
+        if (event.isCancelled()) return null;
+
+        return player.drop(event.getDropItem(), event.isDropAll());
     }
 
     @Redirect(method = "handlePlayerInput", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.setPlayerInput(FFZZ)V"))

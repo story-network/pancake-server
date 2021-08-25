@@ -6,19 +6,18 @@
 
 package sh.pancake.server.impl.event.player;
 
-import javax.annotation.Nullable;
-
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
 public class PlayerDropItemEvent extends PlayerEvent {
 
-    private boolean dropAll;
     private ItemStack dropItem;
+    private boolean dropAll;
 
-    public PlayerDropItemEvent(ServerPlayer player, boolean dropAll, @Nullable ItemStack dropItem) {
+    public PlayerDropItemEvent(ServerPlayer player, ItemStack dropItem, boolean dropAll) {
         super(player);
 
+        this.dropItem = dropItem;
         this.dropAll = dropAll;
     }
 
@@ -29,13 +28,12 @@ public class PlayerDropItemEvent extends PlayerEvent {
     public void setDropAll(boolean dropAll) {
         this.dropAll = dropAll;
     }
-    
-    @Nullable
+
     public ItemStack getDropItem() {
         return dropItem;
     }
 
-    public void setDropItem(@Nullable ItemStack dropItem) {
+    public void setDropItem(ItemStack dropItem) {
         this.dropItem = dropItem;
     }
     
