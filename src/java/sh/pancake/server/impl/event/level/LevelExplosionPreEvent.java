@@ -8,8 +8,8 @@ package sh.pancake.server.impl.event.level;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ExplosionDamageCalculator;
-import net.minecraft.world.level.Level;
 import sh.pancake.server.impl.level.ExplosionInfo;
 
 public class LevelExplosionPreEvent extends LevelEvent {
@@ -18,7 +18,7 @@ public class LevelExplosionPreEvent extends LevelEvent {
 
     private ExplosionDamageCalculator damageCalculator;
 
-    public LevelExplosionPreEvent(Level level, ExplosionInfo info, @Nullable ExplosionDamageCalculator damageCalculator) {
+    public LevelExplosionPreEvent(ServerLevel level, ExplosionInfo info, @Nullable ExplosionDamageCalculator damageCalculator) {
         super(level);
 
         this.info = info;

@@ -20,7 +20,8 @@
       "network.ServerGamePacketListenerImplMixin",
       "network.ServerLoginPacketListenerImplMixin",
       "PlayerListMixin",
-      "level.ServerLevelMixin"
+      "level.ServerLevelMixin",
+      "inventory.AbstractContainerMenuMixin"
     ],
     "injectors": {
       "defaultRequire": 1

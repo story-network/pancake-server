@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import sh.pancake.server.impl.level.ExplosionInfo;
 
@@ -23,7 +23,7 @@ public class LevelExplosionPostEvent extends LevelEvent {
 
     private Map<Player, Vec3> hitPlayerMap;
 
-    public LevelExplosionPostEvent(Level level, ExplosionInfo info, List<BlockPos> blockList, Map<Player, Vec3> hitPlayerMap) {
+    public LevelExplosionPostEvent(ServerLevel level, ExplosionInfo info, List<BlockPos> blockList, Map<Player, Vec3> hitPlayerMap) {
         super(level);
 
         this.info = info;

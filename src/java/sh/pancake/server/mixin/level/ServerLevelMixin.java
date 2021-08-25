@@ -90,7 +90,7 @@ public abstract class ServerLevelMixin {
         double var6,
         float var7,
         boolean var8,
-        BlockInteraction interaction,
+        BlockInteraction var9,
         CallbackInfoReturnable<Explosion> callbackInfo,
         Explosion explosion
     ) {

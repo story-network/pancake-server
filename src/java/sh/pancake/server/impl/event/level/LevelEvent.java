@@ -6,18 +6,18 @@
 
 package sh.pancake.server.impl.event.level;
 
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import sh.pancake.server.impl.event.CancellableEvent;
 
 public abstract class LevelEvent extends CancellableEvent {
 
-    private final Level level;
+    private final ServerLevel level;
 
-    public LevelEvent(Level level) {
+    public LevelEvent(ServerLevel level) {
         this.level = level;
     }
 
-    public Level getLevel() {
+    public ServerLevel getLevel() {
         return level;
     }
 

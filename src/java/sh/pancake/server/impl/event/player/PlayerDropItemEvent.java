@@ -14,11 +14,15 @@ public class PlayerDropItemEvent extends PlayerEvent {
     private ItemStack dropItem;
     private boolean dropAll;
 
-    public PlayerDropItemEvent(ServerPlayer player, ItemStack dropItem, boolean dropAll) {
+    private final Source source;
+
+    public PlayerDropItemEvent(ServerPlayer player, ItemStack dropItem, boolean dropAll, Source source) {
         super(player);
 
         this.dropItem = dropItem;
         this.dropAll = dropAll;
+
+        this.source = source;
     }
 
 	public boolean isDropAll() {
@@ -35,6 +39,28 @@ public class PlayerDropItemEvent extends PlayerEvent {
 
     public void setDropItem(ItemStack dropItem) {
         this.dropItem = dropItem;
+    }
+
+    public Source getSource() {
+        return source;
+    }
+
+    public static enum Source {
+
+        SHORTCUT(false),
+        INVENTORY(true),
+        CREATIVE_INVENTORY(true);
+
+        private final boolean inventory;
+
+        Source(boolean inventory) {
+            this.inventory = inventory;
+        }
+
+        public boolean isInventory() {
+            return inventory;
+        }
+
     }
     
 }

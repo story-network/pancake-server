@@ -271,7 +271,12 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         Inventory inventory = player.getInventory();
 
-        PlayerDropItemEvent event = new PlayerDropItemEvent(player, inventory.getSelected(), dropAll);
+        PlayerDropItemEvent event = new PlayerDropItemEvent(
+            player,
+            inventory.getSelected(),
+            dropAll,
+            PlayerDropItemEvent.Source.SHORTCUT
+        );
         server.dispatchEvent(event);
 
         if (event.isCancelled()) {
@@ -308,11 +313,13 @@ public abstract class ServerGamePacketListenerImplMixin {
             return player.drop(item, dropAll);
         }
 
-        PlayerDropItemEvent event = new PlayerDropItemEvent(player, item, dropAll);
+        PlayerDropItemEvent event = new PlayerDropItemEvent(player, item, dropAll, PlayerDropItemEvent.Source.CREATIVE_INVENTORY);
 
         server.dispatchEvent(event);
 
-        if (event.isCancelled()) return null;
+        if (event.isCancelled()) {
+            return null;
+        }
 
         return player.drop(event.getDropItem(), event.isDropAll());
     }
