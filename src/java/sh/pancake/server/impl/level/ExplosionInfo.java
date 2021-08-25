@@ -4,7 +4,7 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.server.impl.event.level;
+package sh.pancake.server.impl.level;
 
 import javax.annotation.Nullable;
 

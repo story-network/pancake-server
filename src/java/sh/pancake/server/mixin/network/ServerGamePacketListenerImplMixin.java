@@ -7,7 +7,7 @@
 package sh.pancake.server.mixin.network;
 
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,6 +17,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
@@ -26,15 +28,17 @@ import net.minecraft.network.protocol.game.ServerboundResourcePackPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.server.network.TextFilter;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.Boat;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
 import sh.pancake.server.impl.event.player.PayloadMessageEvent;
 import sh.pancake.server.impl.event.player.PlayerChatEvent;
 import sh.pancake.server.impl.event.player.PlayerCommandEvent;
-import sh.pancake.server.impl.event.player.PlayerDisconnectEvent;
+import sh.pancake.server.impl.event.player.PlayerLeaveChatEvent;
 import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
 import sh.pancake.server.impl.event.player.PlayerHandAnimateEvent;
 import sh.pancake.server.impl.event.player.PlayerJumpEvent;
@@ -43,6 +47,7 @@ import sh.pancake.server.impl.event.player.PlayerResourcePackStatusEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleSneakEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleSprintEvent;
 import sh.pancake.server.impl.event.player.PlayerVehicleInputEvent;
+import sh.pancake.server.impl.network.Chat;
 import sh.pancake.server.mixin.accessor.ConnectionAccessor;
 import sh.pancake.server.mixin.accessor.ServerboundCustomPayloadPacketAccessor;
 import sh.pancake.server.mixin.accessor.ServerboundResourcePackPacketAccessor;
@@ -60,12 +65,6 @@ public abstract class ServerGamePacketListenerImplMixin {
     @Final
     @Shadow
     private Connection connection;
-
-    @Shadow
-    public abstract void handleChat(String text);
-
-    @Shadow
-    public abstract void filterTextPacket(String text, Consumer<String> consumer);
 
     @Inject(method = "handleCustomPayload", at = @At("HEAD"), cancellable = true)
     public void handleCustomPayloadPre(ServerboundCustomPayloadPacket packet, CallbackInfo info) {
@@ -93,40 +92,70 @@ public abstract class ServerGamePacketListenerImplMixin {
         server.processPayload(event.getIdentifier(), event.getChannel(), event.getData());
     }
 
-    @Redirect(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;)V", at = @At(value = "INVOKE", target = "net/minecraft/server/network/ServerGamePacketListenerImpl.handleChat(Ljava/lang/String;)V"))
-    public void handleChat_handleChat(ServerGamePacketListenerImpl impl, String text) {
+    @Redirect(
+        method = "handleChat(Lnet/minecraft/server/network/TextFilter$FilteredText;)V",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/players/PlayerList.broadcastMessage(Lnet/minecraft/network/chat/Component;Ljava/util/function/Function;Lnet/minecraft/network/chat/ChatType;Ljava/util/UUID;)V"
+        )
+    )
+    public void handleChat_broadcastMessage(
+        PlayerList list,
+        Component component,
+        Function<ServerPlayer, Component> func,
+        ChatType type,
+        UUID uuid,
+        TextFilter.FilteredText filtered
+    ) {
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server == null) {
-            handleChat(text);
+            list.broadcastMessage(component, func, type, uuid);
             return;
         }
 
-        if (text.startsWith("/")) {
-            PlayerCommandEvent event = new PlayerCommandEvent(player, text.substring(1));
-
-            server.dispatchEvent(event);
-
-            if (event.isCancelled()) return;
-
-            handleChat("/" + event.getCommand());
-        }
-    }
-
-    @Redirect(method = "handleChat(Lnet/minecraft/network/protocol/game/ServerboundChatPacket;)V", at = @At(value = "INVOKE", target = "net/minecraft/server/network/ServerGamePacketListenerImpl.filterTextPacket(Ljava/lang/String;Ljava/util/function/Consumer;)V"))
-    public void handleChat_filterTextPacket(ServerGamePacketListenerImpl impl, String text, Consumer<String> consumer) {
-        PancakeServer server = PancakeServerService.getService().getServer();
-        if (server == null) {
-            filterTextPacket(text, consumer);
-            return;
-        }
-
-        PlayerChatEvent event = new PlayerChatEvent(player, text);
+        PlayerChatEvent event = new PlayerChatEvent(player, filtered.getFiltered(), new Chat(component, type, uuid));
 
         server.dispatchEvent(event);
 
         if (event.isCancelled()) return;
 
-        filterTextPacket(event.getMessage(), consumer);
+        Chat chat = event.getChat();
+        list.broadcastMessage(chat.getComponent(), func, chat.getType(), chat.getUUID());
+    }
+
+    @Redirect(
+        method = "handleCommand",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/commands/Commands.performCommand(Lnet/minecraft/commands/CommandSourceStack;Ljava/lang/String;)I"
+        )
+    )
+    public int handleCommand_performCommand(Commands commands, CommandSourceStack source, String rawCommand) {
+        PancakeServer pancakeServer = PancakeServerService.getService().getServer();
+        if (pancakeServer == null) {
+            return commands.performCommand(source, rawCommand);
+        }
+
+        String command;
+        if (rawCommand.startsWith("/")) {
+            command = rawCommand.substring(1);
+        } else {
+            command = rawCommand;
+        }
+
+        PlayerCommandEvent event = new PlayerCommandEvent(player, command, source);
+
+        pancakeServer.dispatchEvent(event);
+
+        if (event.isCancelled()) return 0;
+
+        if (event.getCommand().startsWith("/")) {
+            command = event.getCommand().substring(1);
+        } else {
+            command = event.getCommand();
+        }
+
+        return server.getCommands().performCommand(event.getSource(), command);
     }
 
     @Inject(method = "handleResourcePackResponse", at = @At("HEAD"))
@@ -208,7 +237,13 @@ public abstract class ServerGamePacketListenerImplMixin {
         boat.setPaddleState(event.getLeft(), event.getRight());
     }
 
-    @Redirect(method = "onDisconnect", at = @At(value = "INVOKE", target = "net/minecraft/server/players/PlayerList.broadcastMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/ChatType;Ljava/util/UUID;)V"))
+    @Redirect(
+        method = "onDisconnect",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/players/PlayerList.broadcastMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/ChatType;Ljava/util/UUID;)V"
+        )
+    )
     public void onDisconnect_broadcastMessage(PlayerList list, Component component, ChatType type, UUID uuid) {
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server == null) {
@@ -216,11 +251,13 @@ public abstract class ServerGamePacketListenerImplMixin {
             return;
         }
 
-        PlayerDisconnectEvent event = new PlayerDisconnectEvent(player, component, type, uuid);
+        PlayerLeaveChatEvent event = new PlayerLeaveChatEvent(player, new Chat(component, type, uuid));
+        server.dispatchEvent(event);
 
         if (event.isCancelled()) return;
         
-        list.broadcastMessage(event.getLeaveText(), event.getType(), event.getBroadcastUUID());
+        Chat chat = event.getLeaveChat();
+        list.broadcastMessage(chat.getComponent(), chat.getType(), chat.getUUID());
     }
 
     @Redirect(method = "handlePlayerAction", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.drop(Z)Z"))
@@ -230,15 +267,20 @@ public abstract class ServerGamePacketListenerImplMixin {
             return player.drop(dropAll);
         }
 
-        PlayerDropItemEvent event = new PlayerDropItemEvent(player, dropAll, player.inventory.getSelected());
+        Inventory inventory = player.getInventory();
+
+        PlayerDropItemEvent event = new PlayerDropItemEvent(player, dropAll, inventory.getSelected());
         server.dispatchEvent(event);
 
         if (event.isCancelled()) {
             // Fix player inventory so they don't think they lost item
-            player.connection.send(new ClientboundContainerSetSlotPacket(
-                -2,
-                player.inventory.selected,
-                player.inventory.getSelected())
+            player.connection.send(
+                new ClientboundContainerSetSlotPacket(
+                    -2,
+                    0,
+                    inventory.selected,
+                    inventory.getSelected()
+                )
             );
             return false;
         }

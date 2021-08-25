@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
+import sh.pancake.server.impl.level.ExplosionInfo;
 
 public class LevelExplosionPreEvent extends LevelEvent {
 

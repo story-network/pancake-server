@@ -102,7 +102,7 @@ public class PancakeServer
         if (modResult.isExecuted()) return modResult;
 
         CommandResult pluginResult = pluginManager.executeCommand(reader, stack);
-        if (pluginResult.isExecuted()) return modResult;
+        if (pluginResult.isExecuted()) return pluginResult;
 
         return serverCommands.executeCommand(reader, stack);
     }

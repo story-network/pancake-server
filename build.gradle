@@ -11,7 +11,10 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(11)
+group 'sh.pancake'
+version '0.1.0'
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(16)
 
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
@@ -22,7 +25,7 @@ repositories {
 
     maven {
         name = 'Sponge'
-        url = 'https://repo.spongepowered.org/maven'
+        url = 'https://repo.spongepowered.org/repository/maven-public/'
     }
 
     maven {
@@ -42,7 +45,7 @@ configurations {
 
 dependencies {
     // Minecraft server
-    storymap name: 'minecraft-server', version: '1.16.5'
+    storymap name: 'minecraft-server', version: '1.17.1'
 
     implementation 'org.jline:jline-terminal:3.19.0'
     implementation 'org.jline:jline-terminal-jansi:3.19.0'
@@ -50,7 +53,7 @@ dependencies {
 
     implementation 'net.minecrell:terminalconsoleappender:1.2.0'
 
-    compileOnly 'sh.pancake:pancake-launcher:0.4.0'
+    compileOnly 'sh.pancake:pancake-launcher:0.5.0'
 
     // compileOnly files('./build/libs/pancake-launcher-0.4.0-all.jar')
     

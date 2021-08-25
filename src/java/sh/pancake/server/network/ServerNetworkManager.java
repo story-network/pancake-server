@@ -8,11 +8,18 @@ package sh.pancake.server.network;
 
 import java.io.Closeable;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import javax.annotation.Nullable;
+
+import com.mojang.authlib.GameProfile;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelPipeline;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerConnectionListener;
 import sh.pancake.server.event.EventDispatcher;
 import sh.pancake.server.impl.event.network.ChannelInitializeEvent;
@@ -32,6 +39,8 @@ public class ServerNetworkManager implements Closeable {
 
     private final Set<Channel> channels;
 
+    private final Map<Channel, GameProfile> profileMap;
+
     public ServerNetworkManager(EventDispatcher dispatcher, ServerConnectionListener serverConnectionListener) {
         this.dispatcher = dispatcher;
 
@@ -41,6 +50,27 @@ public class ServerNetworkManager implements Closeable {
         this.outgoingHandler = new PacketOutgoingHandler(dispatcher);
 
         this.channels = Collections.newSetFromMap(new WeakHashMap<>());
+
+        this.profileMap = new WeakHashMap<>();
+    }
+
+    public void markProfile(Channel channel, GameProfile profile) {
+        if (profileMap.containsKey(channel)) return;
+
+        profileMap.put(channel, profile);
+    }
+
+    @Nullable
+    public GameProfile getProfile(Channel channel) {
+        return profileMap.get(channel);
+    }
+
+    @Nullable
+    public ServerPlayer getPlayer(MinecraftServer server, Channel channel) {
+        GameProfile profile = profileMap.get(channel);
+        if (profile == null) return null;
+
+        return server.getPlayerList().getPlayer(profile.getId());
     }
 
     public Set<Channel> getChannels() {

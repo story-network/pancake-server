@@ -7,7 +7,7 @@
 package sh.pancake.server.level;
 
 import net.minecraft.world.level.Explosion;
-import sh.pancake.server.impl.event.level.ExplosionInfo;
+import sh.pancake.server.impl.level.ExplosionInfo;
 import sh.pancake.server.mixin.accessor.ExplosionAccessor;
 
 public class ExplosionUtil {

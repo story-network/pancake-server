@@ -1,10 +1,10 @@
 {
     "required": true,
-    "minVersion": "0.6",
+    "minVersion": "0.8",
     "package": "sh.pancake.server.mixin",
     "priority": 999999,
     "mixinPriority": -999999,
-    "compatibilityLevel": "JAVA_11",
+    "compatibilityLevel": "JAVA_16",
     "server": [
       "accessor.ServerConnectionListenerAccessor",
       "accessor.CommandNodeAccessor",
@@ -18,7 +18,9 @@
       "ServerConnectionListenerMixin",
       "network.ServerStatusPacketListenerImplMixin",
       "network.ServerGamePacketListenerImplMixin",
-      "level.ServerLevelMixin",
+      "network.ServerLoginPacketListenerImplMixin",
+      "PlayerListMixin",
+      "level.ServerLevelMixin"
     ],
     "injectors": {
       "defaultRequire": 1

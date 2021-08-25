@@ -7,23 +7,30 @@
 package sh.pancake.server.impl.event.player;
 
 import net.minecraft.server.level.ServerPlayer;
+import sh.pancake.server.impl.network.Chat;
 
 public class PlayerChatEvent extends PlayerEvent {
 
-    private String message;
+    private final String message;
+    private Chat chat;
 
-    public PlayerChatEvent(ServerPlayer player, String message) {
+    public PlayerChatEvent(ServerPlayer player, String message, Chat chat) {
         super(player);
 
         this.message = message;
+        this.chat = chat;
     }
     
     public String getMessage() {
         return message;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public Chat getChat() {
+        return chat;
+    }
+
+    public void setChat(Chat chat) {
+        this.chat = chat;
     }
     
 }

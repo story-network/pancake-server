@@ -23,9 +23,9 @@ import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Explosion.BlockInteraction;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
-import sh.pancake.server.impl.event.level.ExplosionInfo;
 import sh.pancake.server.impl.event.level.LevelExplosionPostEvent;
 import sh.pancake.server.impl.event.level.LevelExplosionPreEvent;
+import sh.pancake.server.impl.level.ExplosionInfo;
 import sh.pancake.server.level.ExplosionUtil;
 import sh.pancake.server.mixin.accessor.ExplosionAccessor;
 

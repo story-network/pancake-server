@@ -8,6 +8,10 @@ package sh.pancake.server.command;
 
 import java.util.function.Function;
 
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+
 import net.minecraft.commands.CommandSourceStack;
 import sh.pancake.server.PancakeServer;
 
@@ -41,5 +45,13 @@ public class PancakeCommandStack {
 
     public CommandSourceStack getInnerStack() {
         return innerStack;
+    }
+
+    public static LiteralArgumentBuilder<PancakeCommandStack> literal(String name) {
+        return LiteralArgumentBuilder.literal(name);
+    }
+
+    public static <T> RequiredArgumentBuilder<PancakeCommandStack, T> argument(String name, ArgumentType<T> type) {
+        return RequiredArgumentBuilder.argument(name, type);
     }
 }

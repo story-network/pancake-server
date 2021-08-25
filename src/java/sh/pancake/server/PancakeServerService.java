@@ -9,10 +9,12 @@ package sh.pancake.server;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
@@ -24,7 +26,6 @@ import org.spongepowered.asm.mixin.Mixins;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecrell.terminalconsole.TerminalConsoleAppender;
 import sh.pancake.launcher.IPancakeServer;
-import sh.pancake.launcher.classloader.DynamicURLClassLoader;
 import sh.pancake.server.console.ServerConsole;
 import sh.pancake.server.extension.DependencySorter;
 import sh.pancake.server.extension.Extension;
@@ -111,7 +112,7 @@ public class PancakeServerService implements IPancakeServer {
     }
 
     @Override
-    public void start(String[] args, DynamicURLClassLoader loader, Runnable finishMixin) {
+    public void start(String[] args, Consumer<URL> addURL, Runnable finishMixin) {
         ensurePhase(ServerPhase.NOT_STARTED, ServerPhase.PREPARING);
 
         this.startTime = System.currentTimeMillis();
@@ -127,7 +128,7 @@ public class PancakeServerService implements IPancakeServer {
         }));
 
         LOGGER.info("Loading external libraries...");
-        loadLibraries(loader);
+        loadLibraries(addURL);
 
         ExtensionStore<ModInfo> modStore = new ExtensionStore<>("pancake_mod");
         ModManager modManager = new ModManager(modStore);
@@ -138,14 +139,14 @@ public class PancakeServerService implements IPancakeServer {
         this.server = new PancakeServer(this, modManager, pluginManager);
 
         LOGGER.info("Constructing mods...");
-        constructMods(modStore, loader);
+        constructMods(modStore, addURL);
 
         // Add server Mixin
         Mixins.addConfiguration("pancake-config.json");
 
         finishMixin.run();
 
-        doPreInit(loader);
+        doPreInit();
 
         net.minecraft.server.Main.main(args);
     }
@@ -154,14 +155,14 @@ public class PancakeServerService implements IPancakeServer {
      * Load libraries from libraries directory
      * @param loader
      */
-    private void loadLibraries(DynamicURLClassLoader loader) {
+    private void loadLibraries(Consumer<URL> addURL) {
         File librariesDir = new File("libraries");
 
         librariesDir.mkdirs();
 
         for (var file : librariesDir.listFiles((dir, name) -> name.endsWith(".jar"))) {
             try {
-                loader.addURL(file.toURI().toURL());
+                addURL.accept(file.toURI().toURL());
                 LOGGER.info("Loaded external library " + file.getName() + " to classpath");
             } catch (Exception e) {
                 LOGGER.fatal("Cannot not load external library file" + file.getName() + ".");
@@ -192,7 +193,7 @@ public class PancakeServerService implements IPancakeServer {
      *
      * @param loader
      */
-    private void doPreInit(DynamicURLClassLoader loader) {
+    private void doPreInit() {
         ensurePhase(ServerPhase.PREPARING, ServerPhase.PRE_INIT);
 
         LOGGER.info("Loading plugins...");
@@ -204,7 +205,7 @@ public class PancakeServerService implements IPancakeServer {
      * Construct mods from mods directory
      * @param loader
      */
-    private void constructMods(ExtensionStore<ModInfo> modStore, DynamicURLClassLoader loader) {
+    private void constructMods(ExtensionStore<ModInfo> modStore, Consumer<URL> addURL) {
         File modDirectory = new File(Constants.MOD_DIRECTORY);
         modDirectory.mkdirs();
 
@@ -226,7 +227,7 @@ public class PancakeServerService implements IPancakeServer {
                 }
             }
 
-            ModInitializer initializer = new ModInitializer(server, loader);
+            ModInitializer initializer = new ModInitializer(server, PancakeServerService.class.getClassLoader(), addURL);
             initializer.load(modStore);
         } catch (Exception e) {
             LOGGER.fatal("Error while loading mods. server cannot start.");

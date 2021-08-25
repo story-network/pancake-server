@@ -6,13 +6,14 @@
 
 package sh.pancake.server.mod;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 import org.spongepowered.asm.mixin.Mixins;
 
-import sh.pancake.launcher.classloader.DynamicURLClassLoader;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.extension.DependencySorter;
 import sh.pancake.server.extension.ExtensionStore;
@@ -22,11 +23,14 @@ public class ModInitializer {
 
     private final PancakeServer server;
 
-    private final DynamicURLClassLoader loader;
+    private final ClassLoader classLoader;
 
-    public ModInitializer(PancakeServer server, DynamicURLClassLoader loader) {
+    private final Consumer<URL> addURL;
+
+    public ModInitializer(PancakeServer server, ClassLoader classLoader, Consumer<URL> addURL) {
         this.server = server;
-        this.loader = loader;
+        this.classLoader = classLoader;
+        this.addURL = addURL;
     }
 
     public void load(ExtensionStore<ModInfo> store) throws Exception {
@@ -39,9 +43,9 @@ public class ModInitializer {
 
             Callable<Void> task = () -> {
                 try {
-                    loader.addURL(ext.getURL());
+                    addURL.accept(ext.getURL());
 
-                    Class<?> mainClass = loader.loadClass(ext.getMetadata().getEntryClassName());
+                    Class<?> mainClass = classLoader.loadClass(ext.getMetadata().getEntryClassName());
 
                     ModEntrypoint entry = mainClass.asSubclass(ModEntrypoint.class).getConstructor().newInstance();
                     entry.modMain(server, ext);

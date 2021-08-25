@@ -16,13 +16,14 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.SuggestionProviders;
 import sh.pancake.server.mixin.accessor.CommandNodeAccessor;
 
 public class BrigadierUtil {
-    
+
     @SuppressWarnings("unchecked")
     public static <S> void unregisterCommand(CommandNode<S> node, String literal) {
         CommandNodeAccessor<S> nodeAccessor = (CommandNodeAccessor<S>) node;
@@ -61,6 +62,14 @@ public class BrigadierUtil {
 
         while (iterator.hasNext()) {
             var node = iterator.next();
+
+            if (node instanceof LiteralCommandNode) {
+                LiteralCommandNode<T> literalNode = (LiteralCommandNode<T>) node;
+
+                if (suggestion.getRelevantNodes(new StringReader(literalNode.getLiteral())).size() == 1) {
+                    continue;
+                }
+            }
 
             if (node.canUse(source)) {
                 CommandNode<SharedSuggestionProvider> child = toSuggestion(node, redirectMap);
