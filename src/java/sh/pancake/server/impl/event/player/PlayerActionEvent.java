@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
  * @see ServerboundPlayerActionPacket$Action for actions
  * 
  */
-public abstract class PlayerActionEvent extends PlayerEvent {
+public abstract class PlayerActionEvent extends ServerPlayerEventImpl {
 
     private ServerboundPlayerActionPacket.Action action;
 

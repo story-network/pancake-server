@@ -29,6 +29,7 @@ public class ServerCommands implements CommandAdvisor, CommandExecutor {
         this.dispatcher = new PancakeCommandDispatcher<>(namespace);
 
         StopCommand.register(server, dispatcher);
+        ReloadCommand.register(server, dispatcher);
     }
 
     public PancakeCommandDispatcher<PancakeCommandStack> getDispatcher() {

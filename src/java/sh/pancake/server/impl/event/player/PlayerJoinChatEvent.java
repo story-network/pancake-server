@@ -13,7 +13,7 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.server.impl.network.Chat;
 
-public class PlayerJoinChatEvent extends PlayerEvent {
+public class PlayerJoinChatEvent extends ServerPlayerEventImpl {
 
     private Chat joinChat;
 

@@ -8,7 +8,7 @@ package sh.pancake.server.impl.event.player;
 import net.minecraft.server.level.ServerPlayer;
 
 // Note: cancelling or changing the flag can cause the result being desync with client
-public class PlayerToggleSneakEvent extends PlayerEvent {
+public class PlayerToggleSneakEvent extends ServerPlayerEventImpl {
 
     private boolean sneaking;
 

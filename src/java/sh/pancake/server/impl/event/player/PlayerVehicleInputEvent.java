@@ -14,7 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
  * @see PlayerRideMoveEvent for riding move event.
  * 
  */
-public class PlayerVehicleInputEvent extends PlayerEvent {
+public class PlayerVehicleInputEvent extends ServerPlayerEventImpl {
 
     private float xxa;
     private float zza;

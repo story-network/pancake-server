@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import sh.pancake.server.impl.level.ExplosionInfo;
 
-public class LevelExplosionPreEvent extends LevelEvent {
+public class LevelExplosionPreEvent extends ServerLevelEventImpl {
 
     private ExplosionInfo info;
 

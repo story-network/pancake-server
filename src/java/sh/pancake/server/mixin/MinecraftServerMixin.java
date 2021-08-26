@@ -9,9 +9,10 @@ package sh.pancake.server.mixin;
 import java.util.function.BooleanSupplier;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.server.MinecraftServer;
@@ -23,10 +24,10 @@ import sh.pancake.server.impl.event.server.ServerTickEvent;
 public abstract class MinecraftServerMixin {
 
     /**
-     * Overwrite brand name
+     * Modify brand name
      */
-    @Overwrite
-    public String getServerModName() {
+    @ModifyConstant(method = "getServerModName", constant = @Constant(stringValue = "vanilla"), require = 0)
+    public String getServerModName(String prev) {
         return "Pancake";
     }
 

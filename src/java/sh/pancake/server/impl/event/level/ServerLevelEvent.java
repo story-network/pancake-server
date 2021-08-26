@@ -6,10 +6,10 @@
 
 package sh.pancake.server.impl.event.level;
 
-import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 
-public interface LevelEvent {
-    
-    Level getLevel();
+public interface ServerLevelEvent extends LevelEvent {
+
+    ServerLevel getLevel();
 
 }

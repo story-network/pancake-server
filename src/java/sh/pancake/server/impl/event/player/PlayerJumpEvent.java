@@ -15,7 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
  * Cancelling this event only cancel server side behavior
  * 
  */
-public class PlayerJumpEvent extends PlayerEvent {
+public class PlayerJumpEvent extends ServerPlayerEventImpl {
 
     public PlayerJumpEvent(ServerPlayer player) {
         super(player);

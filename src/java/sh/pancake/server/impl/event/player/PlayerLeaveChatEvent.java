@@ -9,7 +9,7 @@ package sh.pancake.server.impl.event.player;
 import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.server.impl.network.Chat;
 
-public class PlayerLeaveChatEvent extends PlayerEvent {
+public class PlayerLeaveChatEvent extends ServerPlayerEventImpl {
 
     private Chat leaveChat;
 

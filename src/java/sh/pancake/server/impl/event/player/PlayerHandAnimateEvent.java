@@ -9,7 +9,7 @@ package sh.pancake.server.impl.event.player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 
-public class PlayerHandAnimateEvent extends PlayerEvent {
+public class PlayerHandAnimateEvent extends ServerPlayerEventImpl {
 
     private InteractionHand hand;
 

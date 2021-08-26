@@ -9,7 +9,7 @@ package sh.pancake.server.impl.event.player;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 
-public class PlayerCommandEvent extends PlayerEvent {
+public class PlayerCommandEvent extends ServerPlayerEventImpl {
 
     private CommandSourceStack source;
 

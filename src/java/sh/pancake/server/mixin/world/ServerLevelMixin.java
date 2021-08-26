@@ -4,13 +4,15 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.server.mixin.level;
+package sh.pancake.server.mixin.world;
 
 import javax.annotation.Nullable;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
@@ -23,6 +25,7 @@ import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Explosion.BlockInteraction;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
+import sh.pancake.server.impl.event.entity.EntitySpawnLevelEvent;
 import sh.pancake.server.impl.event.level.LevelExplosionPostEvent;
 import sh.pancake.server.impl.event.level.LevelExplosionPreEvent;
 import sh.pancake.server.impl.level.ExplosionInfo;
@@ -118,6 +121,30 @@ public abstract class ServerLevelMixin {
 
         if (accessor.getToBlow() != event.getBlockList()) accessor.setToBlow(event.getBlockList());
         if (accessor.getHitPlayers() != event.getHitPlayerMap()) accessor.setHitPlayers(event.getHitPlayerMap());
+    }
+
+    @Shadow
+    protected abstract boolean addEntity(Entity entity);
+
+    @Redirect(
+        method = "addFreshEntity",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/level/ServerLevel.addEntity(Lnet/minecraft/world/entity/Entity;)Z"
+        )
+    )
+    public boolean addFreshEntity_addEntity(ServerLevel level, Entity entity) {
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) return addEntity(entity);
+
+        EntitySpawnLevelEvent event = new EntitySpawnLevelEvent(level, entity);
+        server.dispatchEvent(event);
+
+        if (event.isCancelled()) {
+            return false;
+        }
+
+        return addEntity(event.getEntity());
     }
     
 }

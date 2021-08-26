@@ -8,7 +8,7 @@ package sh.pancake.server.impl.event.player;
 
 import net.minecraft.server.level.ServerPlayer;
 
-public class PlayerPaddleBoatEvent extends PlayerEvent {
+public class PlayerPaddleBoatEvent extends ServerPlayerEventImpl {
 
     private boolean left;
     private boolean right;

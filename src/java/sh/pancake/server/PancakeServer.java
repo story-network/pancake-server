@@ -8,6 +8,7 @@ package sh.pancake.server;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -138,6 +139,13 @@ public class PancakeServer
     public void processPayload(ResourceLocation identifier, Channel channel, ByteBuf buf) {
         modManager.processPayload(identifier, channel, buf);
         pluginManager.processPayload(identifier, channel, buf);
+    }
+
+    /**
+     * Reload reloadable resources (plugins)
+     */
+    public CompletableFuture<Void> reload() {
+        return CompletableFuture.completedFuture(null);
     }
 
     protected void close() {

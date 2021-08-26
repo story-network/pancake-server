@@ -9,7 +9,7 @@ package sh.pancake.server.impl.event.player;
 import net.minecraft.network.protocol.game.ServerboundResourcePackPacket;
 import net.minecraft.server.level.ServerPlayer;
 
-public class PlayerResourcePackStatusEvent extends PlayerEvent {
+public class PlayerResourcePackStatusEvent extends ServerPlayerEventImpl {
 
     private final Status status;
 

@@ -9,7 +9,7 @@ package sh.pancake.server.impl.event.player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
-public class PlayerDropItemEvent extends PlayerEvent {
+public class PlayerDropItemEvent extends ServerPlayerEventImpl {
 
     private ItemStack dropItem;
     private boolean dropAll;

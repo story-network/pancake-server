@@ -11,7 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 
-public class PayloadMessageEvent extends PlayerEvent {
+public class PayloadMessageEvent extends ServerPlayerEventImpl {
 
     private final Channel channel;
 

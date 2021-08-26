@@ -8,7 +8,7 @@ package sh.pancake.server.impl.event.player;
 import net.minecraft.server.level.ServerPlayer;
 
 // Note: cancelling or changing the flag can cause the result being desync with client
-public class PlayerToggleSprintEvent extends PlayerEvent {
+public class PlayerToggleSprintEvent extends ServerPlayerEventImpl {
 
     private boolean sprinting;
 

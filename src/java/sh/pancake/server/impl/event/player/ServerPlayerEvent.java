@@ -6,10 +6,10 @@
 
 package sh.pancake.server.impl.event.player;
 
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 
-public interface PlayerEvent {
+public interface ServerPlayerEvent extends PlayerEvent {
     
-    Player getPlayer();
+    ServerPlayer getPlayer();
 
 }
