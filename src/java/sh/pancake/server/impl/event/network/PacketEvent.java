@@ -10,7 +10,7 @@ import io.netty.channel.Channel;
 import sh.pancake.server.impl.event.CancellableEvent;
 import sh.pancake.server.network.PacketContainer;
 
-public class PacketEvent extends CancellableEvent {
+public class PacketEvent extends CancellableEvent implements ChannelEvent {
 
     private final Channel channel;
     private final PacketContainer packet;
@@ -24,6 +24,7 @@ public class PacketEvent extends CancellableEvent {
         return packet;
     }
 
+    @Override
     public Channel getChannel() {
         return channel;
     }

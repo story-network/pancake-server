@@ -8,9 +8,7 @@ package sh.pancake.server.impl.event.server;
 
 import java.util.function.BooleanSupplier;
 
-import sh.pancake.server.impl.event.CancellableEvent;
-
-public class ServerTickEvent extends CancellableEvent {
+public class ServerTickEvent {
 
     private final BooleanSupplier timeChecker;
     private final int tickCount;

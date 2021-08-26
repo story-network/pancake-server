@@ -9,7 +9,7 @@ package sh.pancake.server.impl.event.network;
 
 import io.netty.channel.Channel;
 
-public class ChannelInitializeEvent {
+public class ChannelInitializeEvent implements ChannelEvent {
     
     private final Channel channel;
 
@@ -17,6 +17,7 @@ public class ChannelInitializeEvent {
         this.channel = channel;
     }
 
+    @Override
     public Channel getChannel() {
         return channel;
     }

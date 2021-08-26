@@ -21,7 +21,9 @@
       "network.ServerLoginPacketListenerImplMixin",
       "PlayerListMixin",
       "world.ServerLevelMixin",
-      "inventory.AbstractContainerMenuMixin"
+      "inventory.AbstractContainerMenuMixin",
+      "entity.EntityTypeMixin",
+      "entity.EntitiesMixin"
     ],
     "injectors": {
       "defaultRequire": 1

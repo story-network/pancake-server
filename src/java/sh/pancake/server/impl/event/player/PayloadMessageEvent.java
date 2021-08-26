@@ -10,8 +10,9 @@ import io.netty.channel.Channel;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import sh.pancake.server.impl.event.network.ChannelEvent;
 
-public class PayloadMessageEvent extends ServerPlayerEventImpl {
+public class PayloadMessageEvent extends ServerPlayerEventImpl implements ChannelEvent {
 
     private final Channel channel;
 
@@ -25,6 +26,7 @@ public class PayloadMessageEvent extends ServerPlayerEventImpl {
         this.data = data;
     }
 
+    @Override
     public Channel getChannel() {
         return channel;
     }

@@ -31,17 +31,13 @@ public abstract class MinecraftServerMixin {
         return "Pancake";
     }
 
-    @Inject(method = "tickServer", at = @At("HEAD"), cancellable = true)
-    void tickServerPre(BooleanSupplier haveTime, CallbackInfo info) {
+    @Inject(method = "tickServer", at = @At("TAIL"))
+    void tickServerPost(BooleanSupplier haveTime, CallbackInfo info) {
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server == null) return;
 
         ServerTickEvent event = new ServerTickEvent(((MinecraftServer) (Object) this).getTickCount(), haveTime);
         server.dispatchEvent(event);
-
-        if (event.isCancelled()) {
-            info.cancel();
-        }
     }
 
 }

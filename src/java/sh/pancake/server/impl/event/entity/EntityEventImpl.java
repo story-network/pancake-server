@@ -8,9 +8,10 @@ package sh.pancake.server.impl.event.entity;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import sh.pancake.server.impl.event.CancellableEvent;
 import sh.pancake.server.impl.event.level.LevelEvent;
 
-public abstract class EntityEventImpl<T extends Entity> implements EntityEvent<T>, LevelEvent {
+public abstract class EntityEventImpl<T extends Entity> extends CancellableEvent implements EntityEvent<T>, LevelEvent {
 
     private final T entity;
 
