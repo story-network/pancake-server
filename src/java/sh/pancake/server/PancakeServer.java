@@ -6,6 +6,7 @@
 
 package sh.pancake.server;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +17,7 @@ import javax.annotation.Nullable;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.tree.CommandNode;
 
 import io.netty.buffer.ByteBuf;
@@ -23,6 +25,7 @@ import io.netty.channel.Channel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.resources.ResourceLocation;
+import sh.pancake.server.command.BrigadierUtil;
 import sh.pancake.server.command.CommandAdvisor;
 import sh.pancake.server.command.CommandExecutor;
 import sh.pancake.server.command.CommandResult;
@@ -117,6 +120,18 @@ public class PancakeServer
         modManager.fillSuggestion(suggestion, stack, redirectMap);
         pluginManager.fillSuggestion(suggestion, stack, redirectMap);
         serverCommands.fillSuggestion(suggestion, stack, redirectMap);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public CompletableFuture<Suggestions> getCompletionSuggestions(StringReader reader, PancakeCommandStack stack) {
+        CompletableFuture<Suggestions>[] futures = new CompletableFuture[] {
+            modManager.getCompletionSuggestions(new StringReader(reader), stack),
+            pluginManager.getCompletionSuggestions(new StringReader(reader), stack),
+            serverCommands.getCompletionSuggestions(new StringReader(reader), stack)
+        };
+
+        return BrigadierUtil.mergeSuggestionTasks(reader.getString(), Arrays.asList(futures));
     }
 
     /**

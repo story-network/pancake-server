@@ -12,5 +12,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 public interface CommandExecutor {
 
     CommandResult executeCommand(StringReader reader, PancakeCommandStack stack) throws CommandSyntaxException;
+
+    default CommandResult executeCommand(String command, PancakeCommandStack stack) throws CommandSyntaxException {
+        return executeCommand(new StringReader(command), stack);
+    }
     
 }

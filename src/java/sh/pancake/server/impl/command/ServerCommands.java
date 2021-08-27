@@ -7,9 +7,12 @@
 package sh.pancake.server.impl.command;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
+import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.tree.CommandNode;
 
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -30,6 +33,8 @@ public class ServerCommands implements CommandAdvisor, CommandExecutor {
 
         StopCommand.register(server, dispatcher);
         ReloadCommand.register(server, dispatcher);
+        
+        TestCommand.register(server, dispatcher);
     }
 
     public PancakeCommandDispatcher<PancakeCommandStack> getDispatcher() {
@@ -48,6 +53,12 @@ public class ServerCommands implements CommandAdvisor, CommandExecutor {
         Map<CommandNode<PancakeCommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap
     ) {
         BrigadierUtil.addSuggestion(suggestion, dispatcher.getRoot(), stack, redirectMap);
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getCompletionSuggestions(StringReader reader, PancakeCommandStack stack) {
+        ParseResults<PancakeCommandStack> parsed = dispatcher.parse(reader, stack);
+        return dispatcher.getCompletionSuggestions(parsed);
     }
     
 }

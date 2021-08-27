@@ -26,14 +26,14 @@ import sh.pancake.server.impl.event.entity.EntityHurtEvent;
 import sh.pancake.server.mixin_deco.entity.EntityHurt;
 
 @Mixin(value = { Boat.class, AbstractMinecart.class, LivingEntity.class, ArmorStand.class, ItemEntity.class, HangingEntity.class })
-@Implements(@Interface(iface = EntityHurt.class, prefix = "hurt$"))
+@Implements(@Interface(iface = EntityHurt.class, prefix = "deco$"))
 public abstract class EntitiesMixin {
 
     @Shadow(remap = false)
     public abstract boolean hurt(DamageSource source, float amount);
-    
+
     @Intrinsic(displace = true)
-    public boolean hurt$hurt(DamageSource source, float amount) {
+    public boolean deco$hurt(DamageSource source, float amount) {
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server == null) {
             return hurt(source, amount);

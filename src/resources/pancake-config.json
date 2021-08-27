@@ -23,7 +23,9 @@
       "world.ServerLevelMixin",
       "inventory.AbstractContainerMenuMixin",
       "entity.EntityTypeMixin",
-      "entity.EntitiesMixin"
+      "entity.EntityMixin",
+      "entity.EntitiesMixin",
+      "entity.ServerPlayerMixin"
     ],
     "injectors": {
       "defaultRequire": 1

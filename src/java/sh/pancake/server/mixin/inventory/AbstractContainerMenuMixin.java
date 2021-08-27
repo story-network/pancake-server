@@ -7,6 +7,7 @@
 package sh.pancake.server.mixin.inventory;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -18,10 +19,37 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
+import sh.pancake.server.impl.event.player.PlayerClickMenuEvent;
 import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
 
 @Mixin(AbstractContainerMenu.class)
-public class AbstractContainerMenuMixin {
+public abstract class AbstractContainerMenuMixin {
+
+    @Shadow
+    public abstract void doClick(int slot, int state, ClickType type, Player player);
+
+    @Redirect(
+        method = "clicked",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/world/inventory/AbstractContainerMenu.doClick(IILnet/minecraft/world/inventory/ClickType;Lnet/minecraft/world/entity/player/Player;)V"
+        )
+    )
+    public void click_doClick(AbstractContainerMenu container, int slot, int state, ClickType type, Player player) {
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) {
+            doClick(slot, state, type, player);
+            return;
+        }
+
+        PlayerClickMenuEvent event = new PlayerClickMenuEvent(container, slot, state, type, player);
+        server.dispatchEvent(event);
+        if (event.isCancelled()) {
+            return;
+        }
+
+        doClick(event.getSlot(), event.getState(), event.getClickType(), event.getPlayer());
+    }
     
     @Redirect(
         method = "doClick",
@@ -52,7 +80,7 @@ public class AbstractContainerMenuMixin {
             if (type == ClickType.THROW) {
                 // shortcut drop cancellation
                 menu.getSlot(slot).safeInsert(item, item.getCount());
-            } else {
+            } else if (slot == AbstractContainerMenu.SLOT_CLICKED_OUTSIDE) {
                 if (menu.getCarried() != item) {
                     // right click drop cancellation
                     if (menu.getCarried().sameItem(item)) {

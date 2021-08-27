@@ -13,10 +13,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+
+import com.mojang.brigadier.ParseResults;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.tree.CommandNode;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.resources.ResourceLocation;
+import sh.pancake.server.command.BrigadierUtil;
+import sh.pancake.server.command.CommandAdvisor;
+import sh.pancake.server.command.CommandExecutor;
+import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandDispatcher;
 import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.event.EventManager;
@@ -24,7 +36,7 @@ import sh.pancake.server.network.payload.PayloadChannel;
 import sh.pancake.server.network.payload.PayloadCollector;
 import sh.pancake.server.network.payload.GlobalPayloadListener;
 
-public class Extension<T> implements PayloadCollector, GlobalPayloadListener {
+public class Extension<T> implements PayloadCollector, GlobalPayloadListener, CommandExecutor, CommandAdvisor {
 
     private final String id;
 
@@ -108,6 +120,26 @@ public class Extension<T> implements PayloadCollector, GlobalPayloadListener {
     @Override
     public void fillPayloadChannels(Set<ResourceLocation> set) {
         set.addAll(payloadMap.keySet());
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getCompletionSuggestions(StringReader reader, PancakeCommandStack stack) {
+        ParseResults<PancakeCommandStack> parsed = commandDispatcher.parse(reader, stack);
+        return commandDispatcher.getCompletionSuggestions(parsed);
+    }
+
+    @Override
+    public void fillSuggestion(
+        CommandNode<SharedSuggestionProvider> suggestion,
+        PancakeCommandStack stack,
+        Map<CommandNode<PancakeCommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap
+    ) {
+        BrigadierUtil.addSuggestion(suggestion, commandDispatcher.getRoot(), stack, redirectMap);
+    }
+
+    @Override
+    public CommandResult executeCommand(StringReader reader, PancakeCommandStack stack) throws CommandSyntaxException {
+        return BrigadierUtil.executeCommand(commandDispatcher, reader, stack);
     }
     
 }

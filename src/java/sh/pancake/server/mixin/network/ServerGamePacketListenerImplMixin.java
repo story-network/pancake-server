@@ -6,11 +6,18 @@
 
 package sh.pancake.server.mixin.network;
 
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+
+import com.mojang.brigadier.ParseResults;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.suggestion.Suggestions;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,10 +29,15 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.PacketUtils;
+import net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.protocol.game.ServerGamePacketListener;
+import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.network.protocol.game.ServerboundResourcePackPacket;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.network.TextFilter;
@@ -37,8 +49,11 @@ import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.item.ItemStack;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
+import sh.pancake.server.command.BrigadierUtil;
+import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.impl.event.player.PayloadMessageEvent;
 import sh.pancake.server.impl.event.player.PlayerChatEvent;
+import sh.pancake.server.impl.event.player.PlayerCloseMenuEvent;
 import sh.pancake.server.impl.event.player.PlayerCommandEvent;
 import sh.pancake.server.impl.event.player.PlayerLeaveChatEvent;
 import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
@@ -359,5 +374,51 @@ public abstract class ServerGamePacketListenerImplMixin {
         player.jumpFromGround();
     }
 
+    @Redirect(method = "handleContainerClose", at = @At(value = "INVOKE", target = "net/minecraft/server/level/ServerPlayer.doCloseContainer()V"))
+    public void handleContainerClose_doCloseContainer(ServerPlayer player) {
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) {
+            player.doCloseContainer();
+            return;
+        }
+
+        PlayerCloseMenuEvent event = new PlayerCloseMenuEvent(player, false);
+        server.dispatchEvent(event);
+
+        player.doCloseContainer();
+    }
+
+    @Overwrite
+    public void handleCustomCommandSuggestions(ServerboundCommandSuggestionPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, (ServerGamePacketListener) this, (ServerLevel) player.getLevel());
+
+        StringReader reader = new StringReader(packet.getCommand());
+        if (reader.canRead() && reader.peek() == '/') {
+            reader.skip();
+        }
+
+        CommandSourceStack source = player.createCommandSourceStack();
+        ParseResults<CommandSourceStack> parsed = server.getCommands().getDispatcher().parse(new StringReader(reader), source);
+
+        CompletableFuture<Suggestions> future;
+        PancakeServer pancakeServer = PancakeServerService.getService().getServer();
+        if (pancakeServer != null) {
+            PancakeCommandStack stack = pancakeServer.createCommandStack(source);
+
+            future = BrigadierUtil.mergeSuggestionTasks(
+                reader.getString(),
+                Arrays.asList(
+                    pancakeServer.getCompletionSuggestions(new StringReader(reader), stack),
+                    server.getCommands().getDispatcher().getCompletionSuggestions(parsed)
+                )
+            );
+        } else {
+            future = server.getCommands().getDispatcher().getCompletionSuggestions(parsed);
+        }
+
+        future.thenAccept(suggestions -> {
+            connection.send(new ClientboundCommandSuggestionsPacket(packet.getId(), suggestions));
+        });
+    }
 
 }

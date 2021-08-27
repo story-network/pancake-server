@@ -6,8 +6,12 @@
 
 package sh.pancake.server.command;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
@@ -15,6 +19,7 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
@@ -33,7 +38,7 @@ public class BrigadierUtil {
         nodeAccessor.getArguments().remove(literal);
     }
 
-    public static <T> void addSuggestion(
+    public static <T extends SharedSuggestionProvider> void addSuggestion(
         CommandNode<SharedSuggestionProvider> suggestion,
         CommandNode<T> root,
         T source
@@ -41,7 +46,7 @@ public class BrigadierUtil {
         addSuggestion(suggestion, root, source, new HashMap<>());
     }
 
-    public static <T> void addSuggestion(
+    public static <T extends SharedSuggestionProvider> void addSuggestion(
         CommandNode<SharedSuggestionProvider> suggestion,
         CommandNode<T> root,
         T source,
@@ -52,7 +57,7 @@ public class BrigadierUtil {
         addSuggestionInner(suggestion, root, source, redirectMap);
     }
 
-    private static <T> void addSuggestionInner(
+    private static <T extends SharedSuggestionProvider> void addSuggestionInner(
         CommandNode<SharedSuggestionProvider> suggestion,
         CommandNode<T> parent,
         T source,
@@ -84,7 +89,7 @@ public class BrigadierUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> CommandNode<SharedSuggestionProvider> toSuggestion(
+    private static <T extends SharedSuggestionProvider> CommandNode<SharedSuggestionProvider> toSuggestion(
         CommandNode<T> node,
         Map<CommandNode<T>, CommandNode<SharedSuggestionProvider>> redirectMap
     ) {
@@ -102,6 +107,7 @@ public class BrigadierUtil {
 
         if (arg instanceof RequiredArgumentBuilder) {
             RequiredArgumentBuilder<SharedSuggestionProvider, ?> requiredArg = (RequiredArgumentBuilder<SharedSuggestionProvider, ?>) arg;
+
             if (requiredArg.getSuggestionsProvider() != null) {
                 requiredArg.suggests(SuggestionProviders.safelySwap(requiredArg.getSuggestionsProvider()));
             }
@@ -123,7 +129,7 @@ public class BrigadierUtil {
         return child;
     }
 
-    public static <T> CommandResult executeCommand(CommandDispatcher<T> dispatcher, StringReader reader, T stack) throws CommandSyntaxException {
+    public static <T extends SharedSuggestionProvider> CommandResult executeCommand(CommandDispatcher<T> dispatcher, StringReader reader, T stack) throws CommandSyntaxException {
         int lastCursor = reader.getCursor();
 
         ParseResults<T> parsed = dispatcher.parse(reader, stack);
@@ -134,6 +140,24 @@ public class BrigadierUtil {
         reader.setCursor(lastCursor);
 
         return new CommandResult(false, 0);
+    }
+
+    public static CompletableFuture<Suggestions> mergeSuggestionTasks(String command, List<CompletableFuture<Suggestions>> tasks) {
+        return CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0]))
+        .thenCompose((v) -> {
+            List<Suggestions> suggestions = new ArrayList<>();
+            
+            var iterator = tasks.iterator();
+            while (iterator.hasNext()) {
+                try {
+                    suggestions.add(iterator.next().get());
+                } catch (Exception e) {
+                    throw new CompletionException(e);
+                }
+            }
+
+            return CompletableFuture.completedFuture(Suggestions.merge(command, suggestions));
+        });
     }
 
 }

@@ -10,11 +10,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import javax.annotation.Nullable;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.tree.CommandNode;
 
 import io.netty.buffer.ByteBuf;
@@ -129,6 +131,11 @@ public class PluginManager implements EventDispatcher, CommandExecutor, CommandA
         Map<CommandNode<PancakeCommandStack>, CommandNode<SharedSuggestionProvider>> redirectMap
     ) {
         ExtensionUtil.fillSuggestion(store, suggestion, stack, redirectMap);
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getCompletionSuggestions(StringReader reader, PancakeCommandStack stack) {
+        return ExtensionUtil.getCompletionSuggestions(store, reader, stack);
     }
 
     @Override
