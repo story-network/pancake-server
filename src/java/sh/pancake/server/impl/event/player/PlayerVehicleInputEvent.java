@@ -24,6 +24,11 @@ public class PlayerVehicleInputEvent extends ServerPlayerEventImpl {
 
     public PlayerVehicleInputEvent(ServerPlayer player, float xxa, float zza, boolean jumping, boolean sneaking) {
         super(player);
+
+        this.xxa = xxa;
+        this.zza = zza;
+        this.jumping = jumping;
+        this.sneaking = sneaking;
     }
 
     public float getXxa() {
