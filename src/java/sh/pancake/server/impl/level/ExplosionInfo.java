@@ -47,6 +47,8 @@ public class ExplosionInfo {
         this.damageSource = damageSource;
 
         this.entity = entity;
+
+        this.interaction = interaction;
     }
 
     public double getX() {

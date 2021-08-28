@@ -6,12 +6,10 @@
 
 package sh.pancake.server.impl.event.player;
 
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import sh.pancake.server.impl.event.CancellableEvent;
-import sh.pancake.server.impl.event.level.ServerLevelEvent;
 
-public abstract class ServerPlayerEventImpl extends CancellableEvent implements ServerPlayerEvent, ServerLevelEvent {
+public abstract class ServerPlayerEventImpl extends CancellableEvent implements ServerPlayerEvent {
     
     private final ServerPlayer player;
 
@@ -22,11 +20,6 @@ public abstract class ServerPlayerEventImpl extends CancellableEvent implements 
     @Override
     public ServerPlayer getPlayer() {
         return player;
-    }
-
-    @Override
-    public ServerLevel getLevel() {
-        return player.getLevel();
     }
 
 }
