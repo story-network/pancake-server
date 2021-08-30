@@ -29,6 +29,7 @@ import sh.pancake.server.PancakeServerService;
 import sh.pancake.server.command.BrigadierUtil;
 import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandDispatcher;
+import sh.pancake.server.impl.event.server.CommandPerformEvent;
 
 @Mixin(Commands.class)
 public abstract class CommandsMixin {
@@ -73,17 +74,30 @@ public abstract class CommandsMixin {
 
     @Redirect(method = "performCommand", at = @At(value = "INVOKE", target = "Lcom/mojang/brigadier/CommandDispatcher;execute(Lcom/mojang/brigadier/StringReader;Ljava/lang/Object;)I"))
     public int executeDispatcher(CommandDispatcher<CommandSourceStack> dispatcher, StringReader reader, Object source) throws CommandSyntaxException {
+        CommandSourceStack stack = (CommandSourceStack) source;
+
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server != null) {
+            CommandPerformEvent event = new CommandPerformEvent(reader.getString(), stack);
+
+            server.dispatchEvent(event);
+            if (event.isCancelled()) return 0;
+
+            if (stack != event.getSource()) stack = event.getSource();
+            if (reader.getString() != event.getCommand()) reader = new StringReader(event.getCommand());
+            if (reader.peek() == '/') {
+                reader.skip();
+            }
+
             int lastCursor = reader.getCursor();
 
-            CommandResult result = server.executeCommand(reader, server.createCommandStack((CommandSourceStack) source));
+            CommandResult result = server.executeCommand(reader, server.createCommandStack(stack));
             if (result.isExecuted()) return result.getReturned();
 
             reader.setCursor(lastCursor);
         }
 
-        return dispatcher.execute(reader, (CommandSourceStack) source);
+        return dispatcher.execute(reader, stack);
     }
 
 }

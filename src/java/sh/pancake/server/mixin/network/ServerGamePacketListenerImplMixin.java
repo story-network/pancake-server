@@ -25,7 +25,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
@@ -54,7 +53,6 @@ import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.impl.event.player.PayloadMessageEvent;
 import sh.pancake.server.impl.event.player.PlayerChatEvent;
 import sh.pancake.server.impl.event.player.PlayerCloseMenuEvent;
-import sh.pancake.server.impl.event.player.PlayerCommandEvent;
 import sh.pancake.server.impl.event.player.PlayerLeaveChatEvent;
 import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
 import sh.pancake.server.impl.event.player.PlayerHandAnimateEvent;
@@ -138,41 +136,6 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         Chat chat = event.getChat();
         list.broadcastMessage(chat.getComponent(), func, chat.getType(), chat.getUUID());
-    }
-
-    @Redirect(
-        method = "handleCommand",
-        at = @At(
-            value = "INVOKE",
-            target = "net/minecraft/commands/Commands.performCommand(Lnet/minecraft/commands/CommandSourceStack;Ljava/lang/String;)I"
-        )
-    )
-    public int handleCommand_performCommand(Commands commands, CommandSourceStack source, String rawCommand) {
-        PancakeServer pancakeServer = PancakeServerService.getService().getServer();
-        if (pancakeServer == null) {
-            return commands.performCommand(source, rawCommand);
-        }
-
-        String command;
-        if (rawCommand.startsWith("/")) {
-            command = rawCommand.substring(1);
-        } else {
-            command = rawCommand;
-        }
-
-        PlayerCommandEvent event = new PlayerCommandEvent(player, command, source);
-
-        pancakeServer.dispatchEvent(event);
-
-        if (event.isCancelled()) return 0;
-
-        if (event.getCommand().startsWith("/")) {
-            command = event.getCommand().substring(1);
-        } else {
-            command = event.getCommand();
-        }
-
-        return server.getCommands().performCommand(event.getSource(), command);
     }
 
     @Inject(method = "handleResourcePackResponse", at = @At("HEAD"))

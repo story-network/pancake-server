@@ -31,10 +31,11 @@ public class ServerCommands implements CommandAdvisor, CommandExecutor {
     public ServerCommands(String namespace, PancakeServer server) {
         this.dispatcher = new PancakeCommandDispatcher<>(namespace);
 
-        StopCommand.register(server, dispatcher);
-        ReloadCommand.register(server, dispatcher);
+        StopCommand.register(dispatcher);
+        ReloadCommand.register(dispatcher);
+        TpsCommand.register(dispatcher);
         
-        TestCommand.register(server, dispatcher);
+        TestCommand.register(dispatcher);
     }
 
     public PancakeCommandDispatcher<PancakeCommandStack> getDispatcher() {

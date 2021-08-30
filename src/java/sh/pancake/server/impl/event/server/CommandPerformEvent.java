@@ -4,20 +4,18 @@
  * Copyright (c) storycraft. Licensed under the Apache Licence 2.0.
  */
 
-package sh.pancake.server.impl.event.player;
+package sh.pancake.server.impl.event.server;
 
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.level.ServerPlayer;
+import sh.pancake.server.impl.event.CancellableEvent;
 
-public class PlayerCommandEvent extends ServerPlayerEventImpl {
+public class CommandPerformEvent extends CancellableEvent {
 
     private CommandSourceStack source;
 
     private String command;
 
-    public PlayerCommandEvent(ServerPlayer player, String command, CommandSourceStack source) {
-        super(player);
-
+    public CommandPerformEvent(String command, CommandSourceStack source) {
         this.command = command;
         this.source = source;
     }

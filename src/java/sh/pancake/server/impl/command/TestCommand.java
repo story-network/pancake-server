@@ -9,13 +9,12 @@ package sh.pancake.server.impl.command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 import net.minecraft.world.entity.Pose;
-import sh.pancake.server.PancakeServer;
 import sh.pancake.server.command.PancakeCommandDispatcher;
 import sh.pancake.server.command.PancakeCommandStack;
 
 public class TestCommand {
 
-    public static void register(PancakeServer server, PancakeCommandDispatcher<PancakeCommandStack> dispatcher) {
+    public static void register(PancakeCommandDispatcher<PancakeCommandStack> dispatcher) {
         dispatcher.register(
             PancakeCommandStack.literal("test")
             .then(
