@@ -25,29 +25,40 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketUtils;
+import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundCommandSuggestionsPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.network.protocol.game.ServerGamePacketListener;
 import net.minecraft.network.protocol.game.ServerboundCommandSuggestionPacket;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundResourcePackPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.server.network.TextFilter;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
 import sh.pancake.server.command.BrigadierUtil;
@@ -57,15 +68,18 @@ import sh.pancake.server.impl.event.player.PlayerChatEvent;
 import sh.pancake.server.impl.event.player.PlayerCloseMenuEvent;
 import sh.pancake.server.impl.event.player.PlayerLeaveChatEvent;
 import sh.pancake.server.impl.event.player.PlayerMenuButtonClickEvent;
+import sh.pancake.server.impl.event.player.PlayerMoveEvent;
 import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
-import sh.pancake.server.impl.event.player.PlayerHandAnimateEvent;
+import sh.pancake.server.impl.event.player.PlayerUseItemEvent;
 import sh.pancake.server.impl.event.player.PlayerJumpEvent;
 import sh.pancake.server.impl.event.player.PlayerPaddleBoatEvent;
 import sh.pancake.server.impl.event.player.PlayerResourcePackStatusEvent;
+import sh.pancake.server.impl.event.player.PlayerInteractEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleSneakEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleSprintEvent;
 import sh.pancake.server.impl.event.player.PlayerVehicleInputEvent;
 import sh.pancake.server.impl.network.Chat;
+import sh.pancake.server.impl.player.BlockActionInfo;
 import sh.pancake.server.mixin.accessor.ConnectionAccessor;
 import sh.pancake.server.mixin.accessor.ServerboundCustomPayloadPacketAccessor;
 import sh.pancake.server.mixin.accessor.ServerboundResourcePackPacketAccessor;
@@ -83,6 +97,15 @@ public abstract class ServerGamePacketListenerImplMixin {
     @Final
     @Shadow
     private Connection connection;
+
+    @Shadow
+    private double lastGoodX;
+
+    @Shadow
+    private double lastGoodY;
+
+    @Shadow
+    private double lastGoodZ;
 
     @Inject(method = "handleCustomPayload", at = @At("HEAD"), cancellable = true)
     public void handleCustomPayloadPre(ServerboundCustomPayloadPacket packet, CallbackInfo info) {
@@ -198,7 +221,7 @@ public abstract class ServerGamePacketListenerImplMixin {
             return;
         }
 
-        PlayerHandAnimateEvent event = new PlayerHandAnimateEvent(player, hand);
+        PlayerInteractEvent event = new PlayerInteractEvent(player, hand);
 
         if (event.isCancelled()) return;
 
@@ -406,6 +429,145 @@ public abstract class ServerGamePacketListenerImplMixin {
         future.thenAccept(suggestions -> {
             connection.send(new ClientboundCommandSuggestionsPacket(packet.getId(), suggestions));
         });
+    }
+
+    @Redirect(
+        method = "handleUseItem",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/level/ServerPlayerGameMode.useItem(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"
+        )
+    )
+    public InteractionResult handleUseItem_useItem(
+        ServerPlayerGameMode mode,
+        ServerPlayer player,
+        Level level,
+        ItemStack item,
+        InteractionHand hand
+    ) {
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) {
+            return mode.useItem(player, level, item, hand);
+        }
+
+        PlayerUseItemEvent event = new PlayerUseItemEvent(player, (ServerLevel) level, item, hand);
+        server.dispatchEvent(event);
+
+        if (event.isCancelled()) {
+            return event.getCancelledResult();
+        }
+
+        return mode.useItem(player, level, event.getItem(), event.getHand());
+    }
+
+    @Redirect(
+        method = "handleUseItemOn",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/level/ServerPlayerGameMode.useItemOn(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/InteractionResult;"
+        )
+    )
+    public InteractionResult handleUseItemOn_useItemOn(
+        ServerPlayerGameMode mode,
+        ServerPlayer player,
+        Level level,
+        ItemStack item,
+        InteractionHand hand,
+        BlockHitResult hitResult
+    ) {
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) {
+            return mode.useItemOn(player, level, item, hand, hitResult);
+        }
+
+        PlayerUseItemEvent event = new PlayerUseItemEvent(player, (ServerLevel) level, item, hand, new BlockActionInfo(hitResult.getBlockPos(), hitResult.getDirection()));
+        server.dispatchEvent(event);
+
+        if (event.isCancelled()) {
+            return event.getCancelledResult();
+        }
+
+        if (!hitResult.getBlockPos().equals(event.getPlaceInfo().getPosition())) {
+            hitResult = hitResult.withPosition(event.getPlaceInfo().getPosition());
+        }
+
+        if (!hitResult.getDirection().equals(event.getPlaceInfo().getDirection())) {
+            hitResult = hitResult.withDirection(event.getPlaceInfo().getDirection());
+        }
+
+        return mode.useItemOn(player, level, event.getItem(), event.getHand(), hitResult);
+    }
+
+    /*
+    @Redirect(
+        method = "handleInteract",
+        at = @At(
+            value = "INVOKE"
+        )
+    )
+    public void handleInteract_TODO() {
+
+    }
+    */
+
+    @Redirect(
+        method = "handlePlayerAction",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/level/ServerPlayerGameMode.handleBlockBreakAction(Lnet/minecraft/core/BlockPos;Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/Direction;I)V"
+        )
+    )
+    public void handlePlayerAction_handleBlockBreakAction(
+        ServerPlayerGameMode mode,
+        BlockPos pos,
+        ServerboundPlayerActionPacket.Action action,
+        Direction direction,
+        int maxHeight,
+        ServerboundPlayerActionPacket packet
+    ) {
+        if (action != ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK) {
+            mode.handleBlockBreakAction(pos, action, direction, maxHeight);
+            return;
+        }
+
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) {
+            mode.handleBlockBreakAction(pos, action, direction, maxHeight);
+            return;
+        }
+
+        PlayerInteractEvent event = new PlayerInteractEvent(player, player.swingingArm, new BlockActionInfo(pos, direction));
+        server.dispatchEvent(event);
+        if (event.isCancelled()) {
+            player.connection.send(new ClientboundBlockUpdatePacket(player.getLevel(), pos));
+            player.connection.send(new ClientboundBlockUpdatePacket(player.getLevel(), pos.relative(direction)));
+            return;
+        }
+
+        BlockActionInfo info = event.getBreakInfo();
+
+        mode.handleBlockBreakAction(info.getPosition(), action, info.getDirection(), maxHeight);
+    }
+
+    @Redirect(
+        method = "handleMovePlayer",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/world/entity/Entity.move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V"
+        )
+    )
+    public void handleMovePlayer_move(Entity entity, MoverType type, Vec3 delta) {
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) {
+            entity.move(type, delta);
+            return;
+        }
+
+        PlayerMoveEvent event = new PlayerMoveEvent(player, lastGoodX, lastGoodY, lastGoodZ, delta);
+        server.dispatchEvent(event);
+        if (event.isCancelled()) return;
+
+        entity.move(type, event.getVec());
     }
 
 }

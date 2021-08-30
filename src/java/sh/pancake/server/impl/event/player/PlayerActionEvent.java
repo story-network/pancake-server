@@ -18,7 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public abstract class PlayerActionEvent extends ServerPlayerEventImpl {
 
-    private ServerboundPlayerActionPacket.Action action;
+    private final ServerboundPlayerActionPacket.Action action;
 
     public PlayerActionEvent(ServerPlayer player, ServerboundPlayerActionPacket.Action action) {
         super(player);
@@ -27,10 +27,6 @@ public abstract class PlayerActionEvent extends ServerPlayerEventImpl {
 
     public ServerboundPlayerActionPacket.Action getAction() {
         return action;
-    }
-
-    public void setAction(ServerboundPlayerActionPacket.Action action) {
-        this.action = action;
     }
 
 }
