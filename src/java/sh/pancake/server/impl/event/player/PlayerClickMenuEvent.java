@@ -11,7 +11,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import sh.pancake.server.impl.event.CancellableEvent;
 
-public class PlayerClickMenuEvent extends CancellableEvent implements PlayerEvent {
+public class PlayerClickMenuEvent extends CancellableEvent implements PlayerEvent, MenuEvent<AbstractContainerMenu> {
 
     private final AbstractContainerMenu menu;
 
@@ -39,6 +39,7 @@ public class PlayerClickMenuEvent extends CancellableEvent implements PlayerEven
         this.player = player;
     }
 
+    @Override
     public AbstractContainerMenu getMenu() {
         return menu;
     }

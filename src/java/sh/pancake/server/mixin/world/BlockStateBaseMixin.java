@@ -2,9 +2,7 @@ package sh.pancake.server.mixin.world;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
@@ -18,11 +16,6 @@ import sh.pancake.server.impl.event.level.block.ProjectileHitBlockEvent;
 
 @Mixin(BlockBehaviour.BlockStateBase.class)
 public class BlockStateBaseMixin {
-    
-    @Inject(method = { "onPlace", "updateShape", "tick", "updateNeighbourShapes" }, at = @At("HEAD"), cancellable = true)
-    public void onPlacePre(CallbackInfo info) {
-        info.cancel();
-    }
     
     @Redirect(
         method = "onProjectileHit",

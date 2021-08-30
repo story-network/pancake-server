@@ -32,6 +32,7 @@ import sh.pancake.server.command.CommandResult;
 import sh.pancake.server.command.PancakeCommandStack;
 import sh.pancake.server.event.EventDispatcher;
 import sh.pancake.server.impl.command.ServerCommands;
+import sh.pancake.server.impl.event.server.ServerReloadEvent;
 import sh.pancake.server.mod.ModManager;
 import sh.pancake.server.network.ServerNetworkManager;
 import sh.pancake.server.network.payload.PayloadCollector;
@@ -156,10 +157,18 @@ public class PancakeServer
         pluginManager.processPayload(identifier, channel, buf);
     }
 
+    public CompletableFuture<Void> reload() {
+        return reload(false);
+    }
+
     /**
      * Reload reloadable resources (plugins)
+     * 
+     * @param fullReload true if minecraft server reloaded. Indicating mod, plugin need to refresh hooked resources.
      */
-    public CompletableFuture<Void> reload() {
+    public CompletableFuture<Void> reload(boolean fullReload) {
+        dispatchEvent(new ServerReloadEvent(fullReload));
+
         return CompletableFuture.completedFuture(null);
     }
 

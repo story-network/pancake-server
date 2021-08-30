@@ -6,27 +6,25 @@
 
 package sh.pancake.server.impl.event.player;
 
-import javax.annotation.Nullable;
-
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
-public class PlayerOpenMenuEvent extends ServerPlayerEventImpl {
+public class PlayerOpenMenuEvent extends ServerPlayerEventImpl implements MenuEvent<AbstractContainerMenu> {
 
     private AbstractContainerMenu menu;
 
-    public PlayerOpenMenuEvent(ServerPlayer player, @Nullable AbstractContainerMenu menu) {
+    public PlayerOpenMenuEvent(ServerPlayer player, AbstractContainerMenu menu) {
         super(player);
 
         this.menu = menu;
     }
 
-    @Nullable
+    @Override
     public AbstractContainerMenu getMenu() {
         return menu;
     }
 
-    public void setMenu(@Nullable AbstractContainerMenu menu) {
+    public void setMenu(AbstractContainerMenu menu) {
         this.menu = menu;
     }
 

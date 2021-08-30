@@ -28,7 +28,9 @@
       "entity.EntityTypeMixin",
       "entity.EntityMixin",
       "entity.EntitiesMixin",
-      "entity.ServerPlayerMixin"
+      "entity.ServerPlayerMixin",
+      "entity.FallingBlockEntityMixin",
+      "fix.floating_vehicle.ServerGamePacketListenerImplFix"
     ],
     "injectors": {
       "defaultRequire": 1

@@ -30,7 +30,7 @@ public class ReloadCommand {
 
         server.submit(() -> server.saveAllChunks(false, true, false))
         .thenApply((v) -> server.reloadResources(server.getPackRepository().getSelectedIds()))
-        .thenApply((v) -> source.getServer().reload())
+        .thenApply((v) -> source.getServer().reload(true))
         .exceptionally((t) -> {
             source.getInnerStack().sendFailure(new TranslatableComponent("commands.reload.failure"));
 
@@ -42,7 +42,7 @@ public class ReloadCommand {
     }
 
     private static int reloadPancake(PancakeCommandStack source) {
-        source.getServer().reload()
+        source.getServer().reload(false)
         .exceptionally((t) -> {
             source.getInnerStack().sendFailure(new TranslatableComponent("commands.reload.failure"));
 

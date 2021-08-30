@@ -44,7 +44,9 @@ import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Boat;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import sh.pancake.server.PancakeServer;
 import sh.pancake.server.PancakeServerService;
@@ -54,6 +56,7 @@ import sh.pancake.server.impl.event.player.PayloadMessageEvent;
 import sh.pancake.server.impl.event.player.PlayerChatEvent;
 import sh.pancake.server.impl.event.player.PlayerCloseMenuEvent;
 import sh.pancake.server.impl.event.player.PlayerLeaveChatEvent;
+import sh.pancake.server.impl.event.player.PlayerMenuButtonClickEvent;
 import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
 import sh.pancake.server.impl.event.player.PlayerHandAnimateEvent;
 import sh.pancake.server.impl.event.player.PlayerJumpEvent;
@@ -349,6 +352,27 @@ public abstract class ServerGamePacketListenerImplMixin {
         server.dispatchEvent(event);
 
         player.doCloseContainer();
+    }
+
+    @Redirect(
+        method = "handleContainerButtonClick",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/world/inventory/AbstractContainerMenu.clickMenuButton(Lnet/minecraft/world/entity/player/Player;I)Z"
+        )
+    )
+    public boolean handleContainerButtonClick_clickMenuButton(AbstractContainerMenu menu, Player player, int buttonId) {
+        PancakeServer server = PancakeServerService.getService().getServer();
+        if (server == null) {
+            return menu.clickMenuButton(player, buttonId);
+        }
+
+        PlayerMenuButtonClickEvent event = new PlayerMenuButtonClickEvent((ServerPlayer) player, menu, buttonId);
+        server.dispatchEvent(event);
+
+        if (event.isCancelled()) return false;
+
+        return menu.clickMenuButton(player, event.getButtonId());
     }
 
     @Overwrite
