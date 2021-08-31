@@ -48,7 +48,6 @@ import net.minecraft.server.network.TextFilter;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
@@ -70,11 +69,11 @@ import sh.pancake.server.impl.event.player.PlayerLeaveChatEvent;
 import sh.pancake.server.impl.event.player.PlayerMenuButtonClickEvent;
 import sh.pancake.server.impl.event.player.PlayerMoveEvent;
 import sh.pancake.server.impl.event.player.PlayerDropItemEvent;
+import sh.pancake.server.impl.event.player.PlayerInteractEvent;
 import sh.pancake.server.impl.event.player.PlayerUseItemEvent;
 import sh.pancake.server.impl.event.player.PlayerJumpEvent;
 import sh.pancake.server.impl.event.player.PlayerPaddleBoatEvent;
 import sh.pancake.server.impl.event.player.PlayerResourcePackStatusEvent;
-import sh.pancake.server.impl.event.player.PlayerInteractEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleSneakEvent;
 import sh.pancake.server.impl.event.player.PlayerToggleSprintEvent;
 import sh.pancake.server.impl.event.player.PlayerVehicleInputEvent;
@@ -223,7 +222,13 @@ public abstract class ServerGamePacketListenerImplMixin {
 
         PlayerInteractEvent event = new PlayerInteractEvent(player, hand);
 
-        if (event.isCancelled()) return;
+        if (event.isCancelled()) {
+            if (event.getCancelledResult().consumesAction()) {
+                player.swing(hand);
+            }
+
+            return;
+        }
 
         player.swing(event.getHand());
     }
@@ -450,14 +455,14 @@ public abstract class ServerGamePacketListenerImplMixin {
             return mode.useItem(player, level, item, hand);
         }
 
-        PlayerUseItemEvent event = new PlayerUseItemEvent(player, (ServerLevel) level, item, hand);
+        PlayerUseItemEvent event = new PlayerUseItemEvent(player, hand);
         server.dispatchEvent(event);
 
         if (event.isCancelled()) {
             return event.getCancelledResult();
         }
 
-        return mode.useItem(player, level, event.getItem(), event.getHand());
+        return mode.useItem(player, level, item, event.getHand());
     }
 
     @Redirect(
@@ -480,35 +485,23 @@ public abstract class ServerGamePacketListenerImplMixin {
             return mode.useItemOn(player, level, item, hand, hitResult);
         }
 
-        PlayerUseItemEvent event = new PlayerUseItemEvent(player, (ServerLevel) level, item, hand, new BlockActionInfo(hitResult.getBlockPos(), hitResult.getDirection()));
+        PlayerUseItemEvent event = new PlayerUseItemEvent(player, hand, new BlockActionInfo(hitResult.getBlockPos(), hitResult.getDirection()));
         server.dispatchEvent(event);
 
         if (event.isCancelled()) {
             return event.getCancelledResult();
         }
 
-        if (!hitResult.getBlockPos().equals(event.getPlaceInfo().getPosition())) {
-            hitResult = hitResult.withPosition(event.getPlaceInfo().getPosition());
+        if (!hitResult.getBlockPos().equals(event.getBlockInfo().getPosition())) {
+            hitResult = hitResult.withPosition(event.getBlockInfo().getPosition());
         }
 
-        if (!hitResult.getDirection().equals(event.getPlaceInfo().getDirection())) {
-            hitResult = hitResult.withDirection(event.getPlaceInfo().getDirection());
+        if (!hitResult.getDirection().equals(event.getBlockInfo().getDirection())) {
+            hitResult = hitResult.withDirection(event.getBlockInfo().getDirection());
         }
 
-        return mode.useItemOn(player, level, event.getItem(), event.getHand(), hitResult);
+        return mode.useItemOn(player, level, item, event.getHand(), hitResult);
     }
-
-    /*
-    @Redirect(
-        method = "handleInteract",
-        at = @At(
-            value = "INVOKE"
-        )
-    )
-    public void handleInteract_TODO() {
-
-    }
-    */
 
     @Redirect(
         method = "handlePlayerAction",
@@ -544,7 +537,7 @@ public abstract class ServerGamePacketListenerImplMixin {
             return;
         }
 
-        BlockActionInfo info = event.getBreakInfo();
+        BlockActionInfo info = event.getBlockInfo();
 
         mode.handleBlockBreakAction(info.getPosition(), action, info.getDirection(), maxHeight);
     }
@@ -553,21 +546,24 @@ public abstract class ServerGamePacketListenerImplMixin {
         method = "handleMovePlayer",
         at = @At(
             value = "INVOKE",
-            target = "net/minecraft/world/entity/Entity.move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V"
+            target = "net/minecraft/server/level/ServerPlayer.move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V"
         )
     )
-    public void handleMovePlayer_move(Entity entity, MoverType type, Vec3 delta) {
+    public void handleMovePlayer_move(ServerPlayer player, MoverType type, Vec3 delta) {
         PancakeServer server = PancakeServerService.getService().getServer();
         if (server == null) {
-            entity.move(type, delta);
+            player.move(type, delta);
             return;
         }
 
         PlayerMoveEvent event = new PlayerMoveEvent(player, lastGoodX, lastGoodY, lastGoodZ, delta);
         server.dispatchEvent(event);
-        if (event.isCancelled()) return;
+        if (event.isCancelled()) {
+            player.teleportTo(lastGoodX, lastGoodY, lastGoodZ);
+            return;
+        }
 
-        entity.move(type, event.getVec());
+        player.move(type, event.getVec());
     }
 
 }

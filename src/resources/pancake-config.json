@@ -12,6 +12,7 @@
       "accessor.ConnectionAccessor",
       "accessor.ServerboundResourcePackPacketAccessor",
       "accessor.ExplosionAccessor",
+      "accessor.MobAccessor",
       "command.CommandsMixin",
       "MinecraftServerMixin",
       "DedicatedServerMixin",
@@ -29,6 +30,7 @@
       "entity.EntityMixin",
       "entity.EntitiesMixin",
       "entity.ServerPlayerMixin",
+      "entity.PlayerMixin",
       "entity.FallingBlockEntityMixin"
     ],
     "injectors": {
